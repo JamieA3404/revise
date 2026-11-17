@@ -53,7 +53,8 @@ function defaultState() {
       mockStart: '2026-12-01', mockEnd: '2026-12-12',
       examStart: '2027-05-10', examEnd: '2027-06-23',
       sound: 'brown', volume: 0.5, sfx: true,
-      spotify: '',   // your Spotify playlist link (see music.js)
+      lofiVol: 0.6,         // study lofi volume (lofi.js)
+      cutsceneDaily: true,  // play the hype cutscene before your first session each day
       // Minutes of revision per day (never less than 60)
       mins: { weekday: 60, weekend: 90, holiday: 120 },
       neaUntil: '2027-03-31',
@@ -71,6 +72,7 @@ function defaultState() {
     papers: [],      // marked papers: { id, date, subject, name, percent, grade, summary }
     activity: {},    // date -> minutes of revision completed
     focusLog: [],
+    lastCutscene: '',
     bestStreak: 0,
     tracks: [],
   };

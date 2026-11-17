@@ -111,6 +111,41 @@ const FUTURE_STEPS = [
     text: 'Freedom to choose your work, your city, your hours, your projects. It all starts with the boring bit: today\'s sessions.' },
 ];
 
+/* Top companies: job titles and ROUGH London total pay (salary + bonus + shares),
+   based on publicly reported 2024–25 figures. Real offers vary a lot by person,
+   year and team. Brand-styled name tiles are used, not official logo files. */
+const COMPANIES = [
+  { id: 'google',    name: 'Google',          roles: 'Software Engineer · ML Engineer',          start: '£75k–£95k',  senior: '£150k–£200k+' },
+  { id: 'meta',      name: 'Meta',            roles: 'Software Engineer · Production Engineer',  start: '£85k–£110k', senior: '£170k–£250k' },
+  { id: 'apple',     name: 'Apple',           roles: 'Software Engineer · iOS Engineer',         start: '£65k–£90k',  senior: '£120k–£170k' },
+  { id: 'amazon',    name: 'Amazon',          roles: 'Software Dev Engineer · Solutions Architect', start: '£60k–£80k', senior: '£120k–£160k' },
+  { id: 'microsoft', name: 'Microsoft',       roles: 'Software Engineer · Cloud Engineer',       start: '£55k–£75k',  senior: '£100k–£140k' },
+  { id: 'deepmind',  name: 'Google DeepMind', roles: 'Research Engineer · AI Engineer',          start: '£80k–£120k', senior: '£180k+' },
+  { id: 'janestreet',name: 'Jane Street',     roles: 'Software Engineer · Quant Trader',         start: '£150k+',     senior: 'way more' },
+  { id: 'fintech',   name: 'Revolut · Monzo', roles: 'Backend Engineer · Data Scientist',        start: '£45k–£70k',  senior: '£90k–£130k' },
+];
+
+// Brand-styled name tiles built with CSS (on Mac/iPad the Apple logo comes from the system font)
+function companyMark(c) {
+  switch (c.id) {
+    case 'google': return '<span class="mk mk-google"><b>G</b><b>o</b><b>o</b><b>g</b><b>l</b><b>e</b></span>';
+    case 'microsoft': return '<span class="mk mk-ms"><span class="ms-grid"><i></i><i></i><i></i><i></i></span>Microsoft</span>';
+    case 'apple': return '<span class="mk mk-apple"><span class="apple-glyph">\uF8FF</span> Apple</span>';
+    case 'amazon': return '<span class="mk mk-amazon">amazon</span>';
+    case 'meta': return '<span class="mk mk-meta">∞ Meta</span>';
+    case 'deepmind': return '<span class="mk mk-deepmind">Google DeepMind</span>';
+    case 'janestreet': return '<span class="mk mk-jane">Jane Street</span>';
+    default: return `<span class="mk mk-fintech">${esc(c.name)}</span>`;
+  }
+}
+function companyTile(c) {
+  return `<div class="co-tile">
+    <div class="co-mark">${companyMark(c)}</div>
+    <div class="co-roles">${esc(c.roles)}</div>
+    <div class="co-pay"><span><small>Starting</small><b>${esc(c.start)}</b></span><span><small>Senior</small><b>${esc(c.senior)}</b></span></div>
+  </div>`;
+}
+
 const FutureView = {
   html() {
     const st = S.settings, today = todayKey();
@@ -122,7 +157,10 @@ const FutureView = {
         <div class="small upper">What you're building</div>
         <h1>Your future is <span class="glow">LIMITLESS.</span></h1>
         <p>${toFinals > 0 ? `<b>${toFinals} days.</b> About <b>${sessionsLeft} sessions</b>. That's all that stands between you and everything below.` : 'This is it. Everything below starts now.'}</p>
-        <a class="btn btn-green btn-big" href="#today">🔒 Lock in now</a>
+        <div class="row center wrap">
+          <button class="btn btn-purple btn-big" data-act="cutscene">🎬 Play the hype cutscene</button>
+          <a class="btn btn-green btn-big" href="#today">🔒 Lock in now</a>
+        </div>
       </section>
 
       <section class="card money-card">
@@ -157,6 +195,17 @@ const FutureView = {
           </div>`).join('')}
       </div>
 
+      <h2 class="mt">Where a CS degree can take you</h2>
+      <p class="muted">Real job titles at top companies, with rough London total pay (salary + bonus + shares). Figures are approximate, from publicly reported 2024–25 data, and vary a lot.</p>
+      <div class="co-grid">
+        ${COMPANIES.map(companyTile).join('')}
+        <div class="co-tile co-own">
+          <div class="co-mark"><span class="mk mk-own">🚀 YOUR COMPANY</span></div>
+          <div class="co-roles">Founder · CEO</div>
+          <div class="co-pay"><span><small>Starting</small><b>£0</b></span><span><small>Ceiling</small><b>none</b></span></div>
+        </div>
+      </div>
+
       <h2 class="mt">What each subject unlocks</h2>
       <div class="unlock-grid">
         ${SUBJECTS.map(s => `<div class="card unlock-card" style="--sc:${s.color}"><b>${s.emoji} ${esc(s.name)}</b><p>${esc(UNLOCKS[s.id][0])}</p></div>`).join('')}
@@ -168,5 +217,7 @@ const FutureView = {
       </section>
       <p class="muted small center-text">Salary and investment figures are rough UK examples to show what's possible, not promises or financial advice.</p>`;
   },
-  bind() {},
+  bind(root) {
+    root.onclick = e => { if (e.target.closest('[data-act="cutscene"]')) Cutscene.play(); };
+  },
 };

@@ -80,6 +80,7 @@ const Sound = {
   async play(kind) {
     this.stop();
     if (!kind || kind === 'off') return;
+    if (kind === 'lofi') { this.current = 'lofi'; Lofi.start(); return; } // generated lofi (lofi.js)
     const ctx = this.getCtx();
     this.master.gain.value = S.settings.volume;
 
@@ -113,6 +114,8 @@ const Sound = {
   },
 
   stop() {
+    if (this.current === 'lofi') Lofi.stop();
+    this.current = null;
     try { if (this.node && this.node.stop) this.node.stop(); } catch (e) {}
     if (this.node) { try { this.node.disconnect(); } catch (e) {} }
     if (this.el) { this.el.pause(); URL.revokeObjectURL(this.el.src); this.el = null; }

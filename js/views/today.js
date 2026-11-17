@@ -30,6 +30,7 @@ const TodayView = {
           <p class="muted">${greet} 👋</p>
         </div>
         <div class="count-pills">
+          <button class="pill pill-hype" data-act="hype">🎬 Hype me up</button>
           ${toMocks > 0 ? `<span class="pill pill-orange">📝 Mocks in <b>${toMocks}</b> days</span>` : ''}
           ${toFinals > 0 ? `<span class="pill pill-purple">🎯 Finals in <b>${toFinals}</b> days</span>` : ''}
         </div>
@@ -106,6 +107,7 @@ const TodayView = {
     root.onclick = e => {
       const b = e.target.closest('[data-act]');
       if (!b) return;
+      if (b.dataset.act === 'hype') return Cutscene.play();
       if (b.dataset.act === 'bonus') {
         const tomorrow = addDays(todayKey(), 1);
         const first = (S.plan.days[tomorrow] || []).shift();

@@ -53,8 +53,8 @@ const Focus = {
   start() {
     this.running = true;
     this.endAt = Date.now() + this.remaining;
-    // Background noise plays during focus, unless your Spotify music is on
-    if (this.phase === 'work' && !(window.Music && Music.on)) Sound.play(S.settings.sound);
+    // Background sound plays during focus (unless lofi is already on from the 🎧 button)
+    if (this.phase === 'work' && !(Lofi.on && S.settings.sound !== 'lofi')) Sound.play(S.settings.sound);
     else Sound.getCtx();
     this.requestWake();
     this.render();
@@ -196,6 +196,7 @@ const Focus = {
       <div class="focus-sound">
         <div class="row wrap center">
           ${soundChip('off', '🔇 Off')}
+          ${soundChip('lofi', '🎧 Lofi')}
           ${soundChip('brown', '🟤 Brown')}
           ${soundChip('white', '⚪ White')}
           ${soundChip('rain', '🌧 Rain')}

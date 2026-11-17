@@ -50,7 +50,8 @@ const SessionView = {
     return `
       <div class="session-head">
         <a href="#today" class="back">← Today</a>
-        <button class="btn btn-white btn-sm" data-act="timer">⏱ Focus timer</button>
+        <div class="row"><button class="btn btn-white btn-sm" data-act="hype">🎬 Hype me up</button>
+        <button class="btn btn-white btn-sm" data-act="timer">⏱ Focus timer</button></div>
       </div>
       <section class="card session-title" style="--sc:${sb.color}">
         <div class="st-emoji">${sb.emoji}</div>
@@ -101,7 +102,7 @@ const SessionView = {
       </section>
       <section class="card"><h3>Key points</h3>${list(L.keyPoints, 'points')}</section>
       <section class="card note-card"><h3>✏️ Note these down</h3>
-        <ul class="checklist">${(L.noteDown || []).map((x, i) => `<li><label><input type="checkbox"> <span>${fmt(x)}</span></label></li>`).join('')}</ul>
+        <ul class="checklist">${(L.noteDown || []).map((x, i) => `<li><label><input type="checkbox" data-note="${i}" ${(s.work.noted || [])[i] ? 'checked' : ''}> <span>${fmt(x)}</span></label></li>`).join('')}</ul>
       </section>
       ${ex.question ? `<section class="card"><h3>Worked example</h3>
         <p class="question">${fmt(ex.question)}</p>
@@ -141,7 +142,7 @@ const SessionView = {
       <form class="card" data-form="dump">
         <h2>🧠 Brain dump: from memory, no notes</h2>
         <p class="question">${fmt(prompt)}</p>
-        <textarea name="text" rows="9" placeholder="Type everything you remember…" required>${esc(d.text || '')}</textarea>
+        <textarea name="text" rows="9" placeholder="Type everything you remember…" data-draft="dump" required>${esc(d.text || s.work.dumpDraft || '')}</textarea>
         ${AI.key()
           ? '<button class="btn btn-green btn-big btn-block" type="submit">Check my brain dump</button>'
           : `<p class="small"><b>Now check against your notes.</b> How much did you get?</p>
@@ -167,7 +168,13 @@ const SessionView = {
     }
     const cards = L.flashcards || [];
     const ui = this.ui;
-    if (!ui.queue) { ui.queue = cards.map((_, i) => i); ui.first = {}; ui.flipped = false; }
+    if (!ui.queue) {
+      // Resume where you left off, or start a fresh deck
+      const saved = s.work.cardState;
+      ui.queue = saved ? saved.queue.slice() : cards.map((_, i) => i);
+      ui.first = saved ? { ...saved.first } : {};
+      ui.flipped = false;
+    }
     const i = ui.queue[0];
     const doneCount = cards.length - new Set(ui.queue).size;
     return `
@@ -207,14 +214,14 @@ const SessionView = {
             <div class="mcq">
               <p class="question"><b>${qi + 1}.</b> ${fmt(q.q)}</p>
               <div class="opts">${q.options.map((o, oi) => `
-                <label class="opt"><input type="radio" name="mcq${qi}" value="${oi}" required><span>${'ABCD'[oi]}</span> ${fmt(o)}</label>`).join('')}</div>
+                <label class="opt"><input type="radio" name="mcq${qi}" value="${oi}" required ${t.draft && String(t.draft.mcq[qi]) === String(oi) ? 'checked' : ''}><span>${'ABCD'[oi]}</span> ${fmt(o)}</label>`).join('')}</div>
             </div>`).join('')}
         </section>
         ${D.written.length ? `<section class="card"><h2>Exam questions</h2>
           ${D.written.map((q, wi) => `
             <div class="written">
               <p class="question"><b>${D.mcq.length + wi + 1}.</b> ${fmt(q.q)} <span class="marks">[${q.marks} marks]</span></p>
-              <textarea name="w${wi}" rows="6" placeholder="Write your answer, showing working…"></textarea>
+              <textarea name="w${wi}" rows="6" placeholder="Write your answer, showing working…">${esc((t.draft && t.draft.w[wi]) || '')}</textarea>
             </div>`).join('')}
         </section>` : ''}
         <div class="next-row"><button class="btn btn-green btn-big" type="submit">Submit for marking</button></div>
@@ -472,6 +479,24 @@ const SessionView = {
     const topic = s.topicId ? topicById(s.topicId) : null;
     this.autoload(s);
 
+    // First session of the day? Play the hype cutscene first (can be turned off in Settings)
+    if (S.settings.cutsceneDaily && S.lastCutscene !== todayKey() && !s.done && !s.step) {
+      S.lastCutscene = todayKey(); save();
+      Cutscene.play(null, s);
+    }
+
+    // Save drafts as you type, so nothing is lost if you leave and come back
+    root.oninput = e => {
+      const el = e.target;
+      if (el.dataset.draft === 'dump') { s.work.dumpDraft = el.value; save(); }
+      const form = el.closest('[data-form="test"]');
+      if (form && s.work.test) {
+        const f = new FormData(form), D = s.work.test.data;
+        s.work.test.draft = { mcq: D.mcq.map((_, i) => f.get('mcq' + i)), w: D.written.map((_, i) => f.get('w' + i) || '') };
+        save();
+      }
+    };
+
     root.onclick = e => {
       const b = e.target.closest('[data-act]');
       if (!b) return;
@@ -479,6 +504,7 @@ const SessionView = {
       switch (b.dataset.act) {
         case 'next': this.advance(s); break;
         case 'retry': ui.error = null; render(); break;
+        case 'hype': Cutscene.play(null, s); break;
         case 'timer': Focus.open({ subject: s.subject, label: topic ? topic.name : (s.paper || 'NEA') }); break;
         case 'paper-timer': Focus.open({ subject: s.subject, label: s.paper }, 90); break;
         case 'flip': ui.flipped = !ui.flipped; render(); break;
@@ -487,6 +513,7 @@ const SessionView = {
           if (!(i in ui.first)) ui.first[i] = b.dataset.act === 'card-yes';
           if (b.dataset.act === 'card-no') ui.queue.push(i); // see it again at the end
           ui.flipped = false;
+          s.work.cardState = { queue: ui.queue.slice(), first: { ...ui.first } }; save();
           if (!ui.queue.length) {
             const total = Object.keys(ui.first).length;
             s.work.cards = { known: Object.values(ui.first).filter(Boolean).length, total };
@@ -513,6 +540,8 @@ const SessionView = {
     root.onchange = e => {
       const a = e.target.dataset.act;
       if (a === 'files') { this.ui.files = [...e.target.files]; render(); }
+      if (e.target.dataset.note != null) { (s.work.noted ||= [])[e.target.dataset.note] = e.target.checked; save(); }
+      if (e.target.type === 'radio') root.oninput(e);
       if (a === 'set-paper') { s.paper = e.target.value; save(); }
       if (a === 'set-series') { s.series = e.target.value; save(); }
     };
