@@ -32,6 +32,26 @@ const SettingsView = {
       </section>
 
       <section class="card">
+        <h2>🔄 Sync your Mac & iPad</h2>
+        ${Sync.enabled() ? `
+          <p>✅ <b>Sync is on.</b> ${Sync.label()}${Sync.lastSync ? ` · last synced ${new Date(Sync.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}` : ''}</p>
+          ${Sync.error ? `<p class="small">⚠️ ${esc(Sync.error)}</p>` : ''}
+          <p class="muted small">Your progress syncs through a secret gist on your GitHub account. Use the same token on your other device and they'll stay in step.</p>
+          <div class="row wrap">
+            <button class="btn btn-blue btn-sm" data-act="sync-now">↻ Sync now</button>
+            <button class="btn btn-white btn-sm" data-act="sync-off">Turn off on this device</button>
+          </div>` : `
+          <p class="small">Keeps your progress the same on every device, live. Do this on <b>both</b> your Mac and iPad, using the same token:</p>
+          <ol class="guide small">
+            <li>Open <a href="https://github.com/settings/tokens/new?scopes=gist&description=Revise%20sync" target="_blank" rel="noopener">this GitHub page</a> (log in if asked). The <b>gist</b> box is already ticked. Set <b>Expiration</b> to <b>No expiration</b> (or after your exams), then press <b>Generate token</b> at the bottom.</li>
+            <li>Copy the token (starts with <code>ghp_</code>) and paste it below. Save it in your Notes too, so you can paste it on your other device.</li>
+          </ol>
+          <label class="field"><span>GitHub token</span><input id="sync-token" type="password" autocomplete="off" placeholder="ghp_…"></label>
+          <button class="btn btn-green btn-sm" data-act="sync-connect">Turn on sync</button>
+          <p class="muted small">Only your revision progress is synced. Your OpenAI key, this token and your audio files never leave the device.</p>`}
+      </section>
+
+      <section class="card">
         <h2>📚 Your set texts & specs</h2>
         <p class="muted small">These make English Literature topics and AI lessons match exactly what you study.</p>
         <div class="field-row">
@@ -135,6 +155,19 @@ const SettingsView = {
         case 'clear-cache': localStorage.removeItem(AI_CACHE_STORE); toast('Saved lessons cleared', '🧹', 'blue'); break;
         case 'del-track': await Tracks.remove(b.dataset.id); render(); break;
         case 'export': this.exportFile(); break;
+        case 'sync-connect': {
+          const t = $('#sync-token').value.trim();
+          if (!/^(ghp_|github_pat_)/.test(t)) return alert('That doesn\'t look like a GitHub token (they start with "ghp_").');
+          b.disabled = true; b.textContent = 'Connecting…';
+          try {
+            const r = await Sync.connect(t);
+            toast(r === 'linked' ? 'Synced with your other device!' : 'Sync is on. Now do the same on your other device', '🔄');
+          } catch (err) { alert('Couldn\'t turn on sync: ' + err.message); }
+          render();
+          break;
+        }
+        case 'sync-now': await Sync.syncNow(); render(); toast('Synced', '🔄', 'blue'); break;
+        case 'sync-off': if (confirm('Turn off sync on this device? Your data stays here; it just stops syncing.')) { Sync.disconnect(); render(); } break;
         case 'rebuild': buildPlan(true); toast('Roadmap rebuilt', '🗺️', 'blue'); break;
         case 'reset':
           if (confirm('Delete ALL your data on this device? Export a backup first if you might want it.') && confirm('Really sure? This can\'t be undone.')) {

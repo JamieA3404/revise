@@ -99,8 +99,11 @@ function load() {
 }
 
 function save() {
+  // Stamp when this device last changed something (used when merging with your other device)
+  if (!((typeof Sync !== 'undefined') && Sync.applying)) S.updatedAt = Date.now();
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }
   catch (e) { console.error('Save failed', e); alert('Could not save — storage may be full.'); }
+  if ((typeof Sync !== 'undefined')) Sync.changed(); // sync to your other device (sync.js)
 }
 
 let S = load();

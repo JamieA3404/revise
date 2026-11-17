@@ -6,7 +6,7 @@
    download the new files. Open the app twice to see the update.
    ========================================================================= */
 
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const CACHE = 'revise-' + CACHE_VERSION;
 
 const FILES = [
@@ -32,6 +32,7 @@ const FILES = [
   'js/lofi.js',
   'js/music.js',
   'js/cutscene.js',
+  'js/sync.js',
   'js/app.js',
   'icons/icon.svg',
   'icons/apple-touch-icon.png',

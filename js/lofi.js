@@ -82,7 +82,7 @@ const Lofi = {
     this.step = 0;
     this.nextTime = ctx.currentTime + 0.15;
     this.timer = setInterval(() => this.schedule(), 25);
-    if (window.Music) Music.render();
+    if ((typeof Music !== 'undefined')) Music.render();
   },
 
   stop() {
@@ -94,7 +94,7 @@ const Lofi = {
     m.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
     setTimeout(() => { try { w.stop(); c.stop(); m.disconnect(); } catch (e) {} }, 600);
     this.on = false;
-    if (window.Music) Music.render();
+    if ((typeof Music !== 'undefined')) Music.render();
   },
 
   setVolume(v) {
@@ -106,7 +106,7 @@ const Lofi = {
     this.vibe = (this.vibe + 1 + Math.floor(Math.random() * (VIBES.length - 1))) % VIBES.length;
     this.key = [-3, -2, 0, 2, 3][Math.floor(Math.random() * 5)];
     this.step = 0;
-    if (window.Music) Music.render();
+    if ((typeof Music !== 'undefined')) Music.render();
   },
 
   /* Look ahead and schedule notes slightly in advance (keeps timing tight) */

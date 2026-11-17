@@ -32,7 +32,9 @@ function render() {
 // The 🔥 streak at the top
 function renderStatbar() {
   const streak = streakInfo();
+  const sync = (typeof Sync !== 'undefined') ? Sync.label() : '';
   $('#statbar').innerHTML = `
+    ${sync ? `<a class="stat stat-sync ${Sync.status}" href="#settings" title="${esc(Sync.error || 'Syncing between your devices')}">${sync}</a>` : ''}
     <span class="stat ${streak.todayDone ? 'lit' : ''}" title="Daily streak">🔥 <b>${streak.current}</b> day${streak.current === 1 ? '' : 's'}</span>`;
 }
 
@@ -49,6 +51,7 @@ Focus.bind();
 Music.init();
 ensurePlan();
 render();
+Sync.start(); // live sync between devices, if you've set it up in Settings
 
 // Ask the browser to keep our data even when storage is low
 navigator.storage?.persist?.();

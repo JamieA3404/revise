@@ -620,3 +620,6 @@ h2.mt { margin-top: 28px; }
 .starts-card { text-align: center; border-color: var(--purple); }
 .preview-list { list-style: none; padding: 0; margin: 14px auto; max-width: 520px; display: grid; gap: 8px; text-align: left; }
 .preview-list li { padding: 10px 14px; border-radius: 14px; background: var(--soft); border-left: 6px solid var(--sc); }
+.stat-sync { font-size: 14px; font-weight: 800; text-decoration: none; }
+.stat-sync.error { border-color: var(--red); }
+code { background: var(--soft); padding: 1px 6px; border-radius: 6px; font-size: .9em; }

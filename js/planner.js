@@ -54,6 +54,9 @@ function dayMinutes(k, phase) {
   return Math.max(60, mins);
 }
 
+// What a session is about: two sessions with the same key are the same session
+function sessionKey(s) { return [s.kind, s.subject, s.topicId || s.paper || ''].join('|'); }
+
 function newSession(kind, subject, extra = {}) {
   return { id: uid(), kind, subject, done: false, ...extra };
 }
@@ -135,7 +138,10 @@ function buildPlan(resetBaseline = false) {
     let mins = k < startOn ? 0 : dayMinutes(k, phase);
     const list = (days[k] = []);
     const used = new Set();
-    const push = s => { list.push(s); apply(s, k); mins -= KINDS[s.kind].mins; used.add(s.subject); };
+    const push = s => {
+      s.id = k + '|' + sessionKey(s); // same plan on both devices → same ids (keeps sync clean)
+      list.push(s); apply(s, k); mins -= KINDS[s.kind].mins; used.add(s.subject);
+    };
     const wd = fromKey(k).getDay();
     const free = wd === 0 || wd === 6 || isHoliday(k);
 
@@ -231,7 +237,7 @@ function revisionStart() {
 
 function todaySessions() { return (S.plan && S.plan.days[todayKey()]) || []; }
 function findSession(id) {
-  for (const k in S.plan.days) { const s = S.plan.days[k].find(x => x.id === id); if (s) return { s, date: k }; }
+  for (const k in S.plan.days) { const s = S.plan.days[k].find(x => x.id === id || (x.alias && x.alias.includes(id))); if (s) return { s, date: k }; }
   return null;
 }
 
