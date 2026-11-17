@@ -61,11 +61,16 @@ const TodayView = {
         </div>
 
         ${tasks.length ? `<ul class="tasks">${tasks.map(t => this.taskRow(t)).join('')}</ul>` : `
+          ${S.autoPlan && S.autoPlan.days[k] && !S.autoPlan.days[k].length ? `
+          <div class="empty card">
+            <div class="empty-emoji">😴</div>
+            <p><b>Rest day.</b> Nothing planned today. Recharging is part of the plan.<br>Feeling keen? Add a task below for bonus XP.</p>
+          </div>` : `
           <div class="empty card">
             <div class="empty-emoji">🗓️</div>
             <p><b>No tasks yet today.</b><br>Add a one-off task below, or set up your weekly plan so tasks appear automatically every day.</p>
-            <a class="btn btn-blue" href="#plan">Set up my weekly plan</a>
-          </div>`}
+            <a class="btn btn-blue" href="#plan">Set up my plan</a>
+          </div>`}`}
 
         ${this.adding ? `
           <form class="add-form card" data-form="add">

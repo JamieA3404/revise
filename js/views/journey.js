@@ -115,7 +115,7 @@ const JourneyView = {
             ${this.selected === w ? `
               <div class="node-info card">
                 <b>Week of ${fmtDate(w, { day: 'numeric', month: 'long' })}</b><br>
-                ${state === 'locked' ? 'Coming up! Plan something good for this week.'
+                ${state === 'locked' ? (plannedInWeek(w) ? `${plannedInWeek(w)} sessions planned. Coming up!` : 'Coming up! Plan something good for this week.')
                   : `${ws.tasks} task${ws.tasks === 1 ? '' : 's'} · ${fmtMins(ws.mins)} focused<br>
                      ${stars < 3 ? `${Math.max(0, st.weeklyGoal - ws.tasks)} more task${st.weeklyGoal - ws.tasks === 1 ? '' : 's'} for 3 stars` : 'Perfect week! 👑'}`}
               </div>` : ''}

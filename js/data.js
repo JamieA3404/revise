@@ -85,7 +85,10 @@ function defaultState() {
       sound: 'brown',               // 'off' | 'brown' | 'white' | 'rain' | 'track:<id>'
       volume: 0.5,
       sfx: true,                    // reward sound effects (dings etc.)
+      // Grade 9 auto-plan options (see planner.js)
+      planner: { weekday: 3, weekend: 5, holiday: 5, lightDay: 5, neaUntil: '2027-03-31' },
     },
+    autoPlan: null,  // the generated day-by-day plan (see planner.js), or null to use the weekly timetable
     // Weekly plan. Keys are JS weekday numbers: 0 = Sunday, 1 = Monday ... 6 = Saturday
     timetable: { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] },
     days: {},        // "YYYY-MM-DD" -> { tasks: [...], cleared: bool }
@@ -113,7 +116,9 @@ function load() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (saved && typeof saved === 'object') {
       // Merge so new settings added in future versions get their defaults
-      return { ...base, ...saved, settings: { ...base.settings, ...(saved.settings || {}) } };
+      const settings = { ...base.settings, ...(saved.settings || {}) };
+      settings.planner = { ...base.settings.planner, ...((saved.settings || {}).planner || {}) };
+      return { ...base, ...saved, settings };
     }
   } catch (e) { console.warn('Could not load saved data', e); }
   return base;
@@ -131,12 +136,18 @@ function makeTask({ subject, type, title = '', source = 'oneoff' }) {
   return { id: uid(), subject, type, title, source, done: false, doneAt: null, xp: 0 };
 }
 
-// Get the record for a day, creating it from your weekly timetable if it's new.
+// What's planned for a day: from the auto-plan if it covers that day,
+// otherwise from your weekly timetable.
+function planSlotsFor(k) {
+  if (S.autoPlan && S.autoPlan.days[k]) return S.autoPlan.days[k];
+  return S.timetable[fromKey(k).getDay()] || [];
+}
+
+// Get the record for a day, creating it from the plan if it's new.
 function ensureDay(k) {
   if (!S.days[k]) {
-    const weekday = fromKey(k).getDay();
     S.days[k] = {
-      tasks: (S.timetable[weekday] || []).map(slot => makeTask({ ...slot, source: 'plan' })),
+      tasks: planSlotsFor(k).map(slot => makeTask({ ...slot, source: 'plan' })),
       cleared: false,
     };
     save();

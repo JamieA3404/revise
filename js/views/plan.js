@@ -27,6 +27,8 @@ const PlanView = {
     const sorted = [...topics].sort((a, b) => ragOrder[a.rag] - ragOrder[b.rag]);
 
     return `
+      ${this.autoPlanCard()}
+
       <div class="section-head">
         <h1>Weekly plan</h1>
         <div class="row wrap">
@@ -34,7 +36,9 @@ const PlanView = {
           <button class="btn btn-blue btn-sm" data-act="refresh-today">↻ Update today from plan</button>
         </div>
       </div>
-      <p class="muted">Whatever you put on a weekday appears on your Today checklist automatically every week.</p>
+      <p class="muted">${S.autoPlan
+        ? `⚠️ The auto-plan is on, so this weekly plan is only used after ${fmtDate(S.autoPlan.to, { day: 'numeric', month: 'long' })}.`
+        : 'Whatever you put on a weekday appears on your Today checklist automatically every week.'}</p>
 
       <div class="week-grid">
         ${WEEKDAYS.map(wd => `
@@ -92,6 +96,78 @@ const PlanView = {
       </div>`;
   },
 
+  /* The Grade 9 auto-plan card at the top of the page */
+  autoPlanCard() {
+    const o = S.settings.planner, p = S.autoPlan;
+    const num = (name, label) => `<label class="field"><span>${label}</span>
+      <input type="number" min="0" max="12" name="${name}" value="${o[name]}" data-planner></label>`;
+    const options = `
+      <details class="plan-options" ${p ? '' : 'open'}>
+        <summary>⚙️ How much can you do? (sessions of ~25 min)</summary>
+        <div class="field-row three">
+          ${num('weekday', 'School days')}
+          ${num('weekend', 'Weekends')}
+          ${num('holiday', 'Holidays')}
+        </div>
+        <div class="field-row">
+          <label class="field"><span>Lighter day each week</span>
+            <select name="lightDay" data-planner>${DAY_NAMES.map((d, i) => `<option value="${i}" ${Number(o.lightDay) === i ? 'selected' : ''}>${d}</option>`).join('')}
+            <option value="-1" ${Number(o.lightDay) === -1 ? 'selected' : ''}>None</option></select></label>
+          <label class="field"><span>Product Design NEA deadline</span>
+            <input type="date" name="neaUntil" value="${o.neaUntil}" data-planner></label>
+        </div>
+      </details>`;
+
+    if (!p) return `
+      <section class="card autoplan">
+        <div class="ap-head"><div class="ap-emoji">🤖</div><div>
+          <h1>Grade 9 auto-plan</h1>
+          <p>Builds a task list for <b>every day from now to your first final exam</b>, with your mocks along the way. It uses spaced repetition, mixes subjects every day, adds more past papers as exams get closer, and gives your weak topics extra sessions.</p>
+        </div></div>
+        ${options}
+        <button class="btn btn-green btn-big btn-block" data-act="gen-plan">✨ Generate my plan</button>
+      </section>`;
+
+    const s = p.stats;
+    const next = [...Array(7)].map((_, i) => addDays(todayKey(), i));
+    const weakCount = Object.values(S.topics).flat().filter(t => t.rag !== 'green').length;
+    return `
+      <section class="card autoplan">
+        <div class="ap-head"><div class="ap-emoji">🤖</div><div>
+          <h1>Your road to 9s</h1>
+          <p class="muted">Planned on ${fmtDate(p.createdOn)} · runs to ${fmtDate(p.to, { day: 'numeric', month: 'long', year: 'numeric' })}${weakCount ? ` · uses ${weakCount} weak topic${weakCount > 1 ? 's' : ''}` : ''}</p>
+        </div></div>
+        <div class="ap-stats">
+          <div><b>${s.sessions}</b><span>sessions</span></div>
+          <div><b>${s.hours}h</b><span>of revision</span></div>
+          <div><b>${s.papers}</b><span>past papers</span></div>
+          <div><b>${s.reviews}</b><span>spaced reviews</span></div>
+        </div>
+        <p class="small center-text">${s.uncovered === 0 ? '✅ Every topic in every subject is covered at least once.' : `${s.uncovered} topics aren't covered yet. Add more sessions per day to fit them in.`}</p>
+
+        <h3>Next 7 days</h3>
+        <div class="ap-days">
+          ${next.map(k => {
+            const slots = planSlotsFor(k);
+            return `<div class="ap-day ${k === todayKey() ? 'is-today' : ''}">
+              <div class="ap-day-name">${k === todayKey() ? 'Today' : fmtDate(k, { weekday: 'short', day: 'numeric' })}</div>
+              ${slots.length ? slots.map(sl => {
+                const sb = subj(sl.subject);
+                return `<div class="ap-slot" style="--sc:${sb.color}" title="${esc(sb.name)}: ${esc(sl.title)}">${sb.emoji} ${ttype(sl.type).emoji} <span>${esc(sl.title)}</span></div>`;
+              }).join('') : '<div class="muted small">Rest day 😴</div>'}
+            </div>`;
+          }).join('')}
+        </div>
+
+        ${options}
+        <div class="row wrap">
+          <button class="btn btn-green" data-act="gen-plan">↻ Regenerate</button>
+          <button class="btn btn-white" data-act="clear-plan">Turn off auto-plan</button>
+        </div>
+        <p class="muted small">After mocks, add your weak topics below and tap <b>Regenerate</b>. The plan will move them to the front. Ticks and XP you've already earned are kept.</p>
+      </section>`;
+  },
+
   topicExample() {
     return { maths: 'Vectors', englang: 'Paper 1 Q5 structure', englit: 'Macbeth quotes', physics: 'Specific heat capacity',
       chemistry: 'Moles', biology: 'Hormones', geography: 'Coastal landforms', business: 'Break-even',
@@ -116,6 +192,23 @@ const PlanView = {
           break;
         }
         case 'refresh-today': refreshToday(); render(); toast('Today now matches your plan', '↻', 'blue'); break;
+        case 'gen-plan': {
+          const p = generateAutoPlan();
+          refreshToday();
+          render();
+          window.scrollTo(0, 0);
+          Sfx.fanfare();
+          Celebrate.show({
+            emoji: '🗺️', colour: 'green', button: 'Let\'s do this',
+            title: 'Your road to 9s is ready',
+            text: `<b>${p.stats.sessions} sessions</b>, about <b>${p.stats.hours} hours</b>, including <b>${p.stats.papers} past papers</b>, all the way to ${fmtDate(p.to, { day: 'numeric', month: 'long' })}.<br>You only ever have to do today's list.`,
+          });
+          break;
+        }
+        case 'clear-plan':
+          if (!confirm('Turn off the auto-plan? Future days will use your weekly plan instead. (Today stays as it is.)')) return;
+          S.autoPlan = null; save(); render();
+          break;
         case 'topic-subj': this.topicSubject = b.dataset.s; render(); break;
         case 'rag': {
           const t = this.topic(b.dataset.id);
@@ -144,6 +237,14 @@ const PlanView = {
           save(); render(); break;
       }
     };
+    // Auto-plan options save as you change them
+    root.onchange = e => {
+      const el = e.target;
+      if (!('planner' in el.dataset)) return;
+      S.settings.planner[el.name] = el.type === 'number' ? Math.max(0, Math.min(12, Number(el.value) || 0)) : el.value;
+      save();
+      if (S.autoPlan) toast('Saved. Tap Regenerate to apply it', '⚙️', 'blue');
+    };
     root.onsubmit = e => {
       e.preventDefault();
       const f = new FormData(e.target);
@@ -170,8 +271,7 @@ const PlanView = {
 function refreshToday() {
   const k = todayKey(), day = ensureDay(k);
   day.tasks = day.tasks.filter(t => t.done || t.source !== 'plan');
-  const wd = fromKey(k).getDay();
-  for (const sl of S.timetable[wd] || []) {
+  for (const sl of planSlotsFor(k)) {
     const already = day.tasks.some(t => t.source === 'plan' && t.subject === sl.subject && t.type === sl.type && t.title === sl.title);
     if (!already) day.tasks.push(makeTask({ ...sl, source: 'plan' }));
   }

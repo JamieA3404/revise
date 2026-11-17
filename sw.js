@@ -6,7 +6,7 @@
    download the new files. Open the app twice to see the update.
    ========================================================================= */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE = 'revise-' + CACHE_VERSION;
 
 const FILES = [
@@ -18,6 +18,7 @@ const FILES = [
   'js/audio.js',
   'js/fx.js',
   'js/rewards.js',
+  'js/planner.js',
   'js/views/today.js',
   'js/views/focus.js',
   'js/views/plan.js',
