@@ -54,6 +54,7 @@ function defaultState() {
       examStart: '2027-05-10', examEnd: '2027-06-23',
       sound: 'brown', volume: 0.5, sfx: true,
       lofiVol: 0.6,         // study lofi volume (lofi.js)
+      lofiBpm: null,        // your lofi tempo, or null to use each vibe's own
       cutsceneDaily: true,  // play the hype cutscene before your first session each day
       // Minutes of revision per day (never less than 60)
       mins: { weekday: 60, weekend: 90, holiday: 120 },

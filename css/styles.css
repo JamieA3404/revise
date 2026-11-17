@@ -615,3 +615,5 @@ h2.mt { margin-top: 28px; }
 @media (max-width: 600px) { .cs-cos { grid-template-columns: repeat(2, 1fr); } }
 .mk-google { gap: 0; }
 .co-pay b { font-size: 15px; white-space: nowrap; }
+.bpm-num { min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+.link-btn { background: none; border: 0; padding: 6px 0; font: inherit; font-size: 13px; font-weight: 700; color: var(--blue); cursor: pointer; }

@@ -44,6 +44,13 @@ const Lofi = {
   step: 0,
   nextTime: 0,
 
+  // Tempo: your own setting (S.settings.lofiBpm) if you've set one, otherwise the vibe's
+  bpm() { return S.settings.lofiBpm || VIBES[this.vibe].bpm; },
+  setBpm(v) {
+    S.settings.lofiBpm = v ? Math.max(50, Math.min(110, Math.round(v))) : null; // null = use the vibe's tempo
+    save();
+  },
+
   midi(n) { return 440 * Math.pow(2, (n + this.key - 69) / 12); },
 
   start() {
@@ -105,7 +112,7 @@ const Lofi = {
   /* Look ahead and schedule notes slightly in advance (keeps timing tight) */
   schedule() {
     const ahead = document.hidden ? 1.5 : 0.2;
-    const sixteenth = 60 / VIBES[this.vibe].bpm / 4;
+    const sixteenth = 60 / this.bpm() / 4;
     while (this.nextTime < this.ctx.currentTime + ahead) {
       this.playStep(this.step, this.nextTime, sixteenth);
       this.nextTime += sixteenth;
