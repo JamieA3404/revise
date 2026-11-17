@@ -10,11 +10,11 @@ const STORAGE_KEY = 'revise-data-v1';
 
 // The kinds of revision session the planner creates
 const KINDS = {
-  learn:      { name: 'Learn & test',  emoji: '📘', mins: 30, xp: 40 },
-  review:     { name: 'Quick review',  emoji: '🔁', mins: 15, xp: 20 },
-  paper:      { name: 'Past paper',    emoji: '📝', mins: 90, xp: 100 },
-  mockreview: { name: 'Mock debrief',  emoji: '🔍', mins: 30, xp: 40 },
-  nea:        { name: 'NEA work',      emoji: '🛠️', mins: 30, xp: 30 },
+  learn:      { name: 'Learn & test',  emoji: '📘', mins: 30 },
+  review:     { name: 'Keep it fresh', emoji: '🔁', mins: 10 },
+  paper:      { name: 'Past paper',    emoji: '📝', mins: 90 },
+  mockreview: { name: 'Mock debrief',  emoji: '🔍', mins: 30 },
+  nea:        { name: 'NEA work',      emoji: '🛠️', mins: 30 },
 };
 
 /* ---------- Date helpers (dates are "YYYY-MM-DD" strings in local time) ---------- */
@@ -70,7 +70,6 @@ function defaultState() {
     papers: [],      // marked papers: { id, date, subject, name, percent, grade, summary }
     activity: {},    // date -> minutes of revision completed
     focusLog: [],
-    xp: 0,
     bestStreak: 0,
     tracks: [],
   };
@@ -85,7 +84,7 @@ function load() {
       for (const k of ['mins', 'texts']) settings[k] = { ...base.settings[k], ...((saved.settings || {})[k] || {}) };
       if (saved.version !== 2) {
         // Upgrading from version 1: keep settings, XP, streak, audio; start the new roadmap fresh
-        return { ...base, settings, createdAt: saved.createdAt || base.createdAt, xp: saved.xp || 0,
+        return { ...base, settings, createdAt: saved.createdAt || base.createdAt,
                  bestStreak: saved.bestStreak || 0, tracks: saved.tracks || [], focusLog: saved.focusLog || [] };
       }
       return { ...base, ...saved, settings };

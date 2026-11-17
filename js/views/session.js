@@ -57,6 +57,7 @@ const SessionView = {
         <div><div class="small upper">${esc(sb.name)} · ${kind.emoji} ${kind.name}${s.strengthen ? ' (strengthen)' : ''} · ${kind.mins} min</div>
         <h1>${esc(title)}</h1></div>
       </section>
+      <div class="unlock-banner">🔓 <b>Unlocks:</b> ${esc((topic && lessonFor(topic) && lessonFor(topic).unlocks) || unlockLine(s))}</div>
       <ol class="stepper">
         ${steps.map(([, name], i) => `<li class="${i < s.step ? 'done' : i === s.step ? 'now' : ''}"><span>${i < s.step ? '✓' : i + 1}</span>${name}</li>`).join('')}
       </ol>
@@ -356,13 +357,16 @@ const SessionView = {
       body = `
         <section class="card result-card">
           <div class="score-big ${r.score >= 80 ? 'good' : r.score >= 55 ? 'ok' : 'low'}">${r.score}%</div>
-          <p>${r.score >= 80 ? 'Excellent: this topic is secure. 🔒' : r.score >= 55 ? 'Good progress. It\'ll come back soon so it sticks.' : 'This one needs more work, so it\'ll come back in 2 days. That\'s the plan working.'}</p>
+          <p>${this.verdict(topic, r.score)}</p>
         </section>
         <section class="stat-grid">
           <div class="card"><div class="small upper">Topic strength</div><div class="big">${st ?? '–'}%</div><div class="bar"><div class="bar-fill" style="width:${st || 0}%;background:${sb.color}"></div></div></div>
           <div class="card"><div class="small upper">Grade 9 ready</div><div class="big">${nineChance(st || 0)}%</div><div class="muted small">for this topic</div></div>
           <div class="card"><div class="small upper">${esc(sb.name)} estimate</div><div class="big">Grade ${est.grade}</div><div class="muted small">${est.enoughData ? est.p9 + '% chance of a 9' : 'needs more topics tested'}</div></div>
-        </section>`;
+        </section>
+        ${s.subject !== 'dit' ? `<section class="card money-mini">💰 ${est.enoughData && est.grade >= 7
+          ? `<b>${esc(sb.name)} is on course for a 7+.</b> That's £120 heading your way. Keep it there.`
+          : `<b>£120 is waiting</b> for a 7+ in ${esc(sb.name)}. Every topic you lock in gets you closer.`}</section>` : ''}`;
     } else {
       body = `<section class="card result-card"><div class="score-big good">✓</div><p>Session logged. Nice work.</p></section>`;
     }
@@ -370,6 +374,16 @@ const SessionView = {
       <div class="next-row">
         ${nextUp ? `<a class="btn btn-green btn-big" href="#session/${nextUp.id}">Next session ▶</a>` : '<a class="btn btn-green btn-big" href="#today">Back to today 🎉</a>'}
       </div>`;
+  },
+
+  // What the score means. A topic is only "secure" after proving it twice, a week apart.
+  verdict(topic, score) {
+    const m = S.mastery[topic.id] || {};
+    const back = m.due ? daysBetween(todayKey(), m.due) : 2;
+    if (isSecure(topic.id)) return `🔒 <b>SECURE.</b> You've proved this one twice. It'll still pop back in ${back} days to stay fresh for the exam.`;
+    if (score >= 80) return `🔥 <b>Strong score, but not secure yet.</b> One good test could be short-term memory. Hit 80%+ again when it comes back in ${back} days and it's locked in.`;
+    if (score >= 55) return `📈 <b>Getting there.</b> It comes back in ${back} days. Score 80%+ twice, a week apart, to make it secure.`;
+    return `💪 <b>This one needs more reps,</b> so it's back in ${back} days. That's not failing, that's the plan finding your marks.`;
   },
 
   /* ======================= Finishing ======================= */
@@ -394,7 +408,7 @@ const SessionView = {
     s.done = true;
     s.doneAt = Date.now();
     addActivity(KINDS[s.kind].mins);
-    grant(KINDS[s.kind].xp + (score >= 80 ? 20 : 0), { x: innerWidth / 2, y: 140 });
+    renderStatbar();
     Sfx.fanfare();
     Confetti.burst(innerWidth / 2, innerHeight / 3, 120);
     buildPlan(); // re-plan the future with your new scores

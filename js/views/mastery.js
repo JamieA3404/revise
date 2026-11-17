@@ -14,9 +14,10 @@ const MasteryView = {
       <section class="card">
         <div class="big-stats">
           <div><b>${tr.learned}/${tr.total}</b><span>topics learned</span></div>
-          <div><b>${tested}</b><span>topics tested</span></div>
+          <div><b>${allTopics().filter(t => isSecure(t.id)).length}</b><span>topics secure 🔒</span></div>
           <div><b>${S.papers.length}</b><span>papers marked</span></div>
         </div>
+        <p class="small">🟢 <b>Secure</b> means you've scored 80%+ twice, at least a week apart. It still comes back every 2 weeks so it stays fresh. 🟡 Building = 65%+. 🟠 Learning = below that.</p>
         <p class="muted small">Estimates use only the work you've done in Revise. Untested topics count as 45%, so the estimates get more accurate as you test more topics. Grade boundaries vary by year, so treat these as a guide, not a promise.</p>
       </section>
 
@@ -43,7 +44,7 @@ const MasteryView = {
           <span class="sh-main">
             <b>${esc(s.name)}</b>
             <span class="bar"><span class="bar-fill" style="width:${e.coverage}%;background:${s.color}"></span></span>
-            <span class="muted small">${e.learned}/${e.count} topics learned · ${e.tested} tested</span>
+            <span class="muted small">${e.learned}/${e.count} learned · <b>${e.secure} secure 🔒</b></span>
           </span>
           <span class="sh-grade ${e.enoughData ? '' : 'dim-grade'}">
             <b>${e.enoughData ? e.grade : '?'}</b><small>${e.enoughData ? e.p9 + '% for a 9' : 'need data'}</small>
@@ -53,9 +54,9 @@ const MasteryView = {
           <div class="topic-rows">
             ${s.id === 'maths' ? '<p class="muted small">"Appears" is Revise\'s estimate of how likely a topic is to come up across the three Higher papers, based on past-paper patterns. Topics are planned in that order.</p>' : ''}
             ${topics.map(t => {
-              const st = strength(t.id), m = S.mastery[t.id];
+              const st = strength(t.id), m = S.mastery[t.id], status = topicStatus(t.id);
               return `<div class="trow">
-                <div class="trow-name">${esc(t.name)}
+                <div class="trow-name"><span>${esc(t.name)} <span class="status-chip st-${status.id}">${status.emoji} ${status.label}</span></span>
                   <span class="muted small">${s.id === 'maths' ? `appears ~${t.freq}% · ` : ''}${m && m.last ? 'last ' + fmtDate(m.last) : 'not started'}</span></div>
                 <div class="trow-bar"><span class="bar"><span class="bar-fill" style="width:${st || 0}%;background:${st == null ? 'transparent' : st >= 80 ? 'var(--green)' : st >= 55 ? 'var(--orange)' : 'var(--red)'}"></span></span>
                   <span class="small"><b>${st == null ? '–' : st + '%'}</b>${st == null ? '' : ` · 9-ready ${nineChance(st)}%`}</span></div>

@@ -159,7 +159,8 @@ function buildPlan(resetBaseline = false) {
       // 4. Reviews that are due, most overdue first. They get up to half the remaining
       //    time, but never so much that new topics fall behind the pace needed to
       //    learn every topic by the cover-by date.
-      let budget = Math.floor(mins / 2);
+      const R = KINDS.review.mins;
+      let budget = unlearned === 0 ? mins : Math.floor(mins / 2); // all learned? reviews can use the whole day
       if (unlearned > 0 && k < cb) {
         const pace = Math.ceil(unlearned / Math.max(1, daysBetween(k, cb)) * 1.1);
         budget = Math.max(0, Math.min(budget, mins - pace * 30));
@@ -168,8 +169,8 @@ function buildPlan(resetBaseline = false) {
         .filter(t => sim[t.id].learned && sim[t.id].due && sim[t.id].due <= k)
         .sort((a, b) => sim[a.id].due.localeCompare(sim[b.id].due) || (sim[a.id].score ?? 0) - (sim[b.id].score ?? 0));
       for (const t of dueTopics) {
-        if (budget < 15 || mins < 15) break;
-        push(newSession('review', t.subject, { topicId: t.id })); budget -= 15;
+        if (budget < R || mins < R) break;
+        push(newSession('review', t.subject, { topicId: t.id })); budget -= R;
       }
 
       // 5. Learn new topics (or strengthen weak ones) with the rest
@@ -178,10 +179,11 @@ function buildPlan(resetBaseline = false) {
         if (!t) break;
         push(newSession('learn', t.subject, { topicId: t.id, strengthen: sim[t.id].learned }));
       }
-      // 6. Use any spare 15 minutes on a quick review of the weakest learned topic
-      if (mins >= 15) {
+      // 6. Use any spare minutes on quick reviews of the weakest learned topics
+      while (mins >= KINDS.review.mins) {
         const t = topics.filter(x => sim[x.id].learned && !used.has(x.subject)).sort((a, b) => (sim[a.id].score ?? 0) - (sim[b.id].score ?? 0))[0];
-        if (t) push(newSession('review', t.subject, { topicId: t.id }));
+        if (!t) break;
+        push(newSession('review', t.subject, { topicId: t.id }));
       }
     }
     baseline[k] = topics.length - unlearned;

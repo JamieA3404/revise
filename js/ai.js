@@ -70,6 +70,7 @@ Use UK English. For maths, write expressions in plain text (x^2, sqrt(5), 3/4, �
     const out = await this.json(this.context(topic.subject), `Topic: "${topic.name}".
 Create today's revision lesson for this topic. JSON keys:
 "goal": one sentence — what the student can do after this session.
+"unlocks": one punchy, hyped-up sentence (max 25 words) for a 15-year-old who wants a career in computer science, to start a business and to invest, connecting THIS topic to something real and exciting (tech, AI, money, business, engineering). Must be true, not exaggerated.
 "keyPoints": 6–10 precise points an examiner expects (definitions, equations with units, processes, key quotes with analysis — whatever this topic needs).
 "noteDown": 4–6 short things to copy into their notes.
 "workedExample": {"question": exam-style question, "steps": [step-by-step working or a model answer broken into steps], "answer": final answer or summary}.

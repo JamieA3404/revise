@@ -30,12 +30,35 @@ function recordScore(topicId, score, kind, weight = 0.5) {
   return m;
 }
 
-// Days until a topic should come back: weak topics return quickly, strong ones later
+// Days until a topic should come back: weak topics return quickly, and even
+// secure topics come back every 2 weeks so they stay fresh for the exam.
 function reviewGap(score, n) {
   if (score < 50) return 2;
   if (score < 65) return 4;
-  if (score < 80) return n < 3 ? 7 : 10;
-  return n < 3 ? 14 : 28;
+  if (score < 80) return 7;
+  return n < 3 ? 10 : 14;
+}
+
+/* A topic is only SECURE when you've proved it twice: two scores of 80%+
+   at least 7 days apart, and the latest score is still 80%+. One good test
+   might just be short-term memory, so it has to survive a gap. */
+const SECURE_SCORE = 80;
+function isSecure(topicId) {
+  const m = S.mastery[topicId];
+  if (!m || !m.history.length) return false;
+  const good = m.history.filter(h => h.s >= SECURE_SCORE);
+  const last = m.history[m.history.length - 1];
+  if (last.s < SECURE_SCORE || good.length < 2) return false;
+  return daysBetween(good[0].d, good[good.length - 1].d) >= 7;
+}
+
+// Not started → Learning → Building → Secure
+function topicStatus(topicId) {
+  const st = strength(topicId);
+  if (st == null) return { id: 'new', label: 'Not started', emoji: '⚪' };
+  if (isSecure(topicId) && st >= SECURE_SCORE) return { id: 'secure', label: 'Secure', emoji: '🟢' };
+  if (st >= 65) return { id: 'building', label: 'Building', emoji: '🟡' };
+  return { id: 'learning', label: 'Learning', emoji: '🟠' };
 }
 
 // Current strength 0–100 (null if never tested), with gentle forgetting after 3 weeks
@@ -58,18 +81,19 @@ function gradeFor(pct) {
 /* Subject summary: coverage, weighted strength, estimated grade, chance of a 9 */
 function subjectEstimate(subjectId) {
   const topics = topicList(subjectId);
-  let wSum = 0, total = 0, tested = 0, learned = 0;
+  let wSum = 0, total = 0, tested = 0, learned = 0, secure = 0;
   for (const t of topics) {
     const s = strength(t.id);
     const w = t.freq || 70;
     wSum += w; total += w * (s == null ? UNKNOWN_PRIOR : s);
     if (s != null) tested++;
     if (S.mastery[t.id]?.learned) learned++;
+    if (isSecure(t.id)) secure++;
   }
   const pct = Math.round(total / wSum);
   return {
     pct, grade: gradeFor(pct), p9: nineChance(pct),
-    tested, learned, count: topics.length,
+    tested, learned, secure, count: topics.length,
     coverage: Math.round(learned / topics.length * 100),
     enoughData: tested >= Math.ceil(topics.length * 0.25),
   };

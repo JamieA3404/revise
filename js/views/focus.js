@@ -100,12 +100,12 @@ const Focus = {
   finishWork(minutes, full) {
     if (minutes < 1) return;
     logFocus(minutes, this.subject);
-    grant(minutes, full ? { x: innerWidth / 2, y: innerHeight / 2 - 160 } : null);
+    renderStatbar();
     if (full) {
       Confetti.burst(innerWidth / 2, innerHeight / 2 - 100, 100);
-      toast(`${minutes} minutes done! +${minutes} XP`, '🍅');
+      toast(`${minutes} minutes locked in. Take your break!`, '🍅');
     } else {
-      toast(`${minutes} min logged. +${minutes} XP`, '⏱');
+      toast(`${minutes} min logged`, '⏱');
     }
   },
 

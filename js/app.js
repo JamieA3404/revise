@@ -8,6 +8,7 @@ const VIEWS = {
   today: TodayView,
   roadmap: RoadmapView,
   mastery: MasteryView,
+  future: FutureView,
   settings: SettingsView,
   session: SessionView,   // #session/<id>
 };
@@ -28,15 +29,11 @@ function render() {
   renderStatbar();
 }
 
-// The 🔥 ⚡ bar at the top
+// The 🔥 streak at the top
 function renderStatbar() {
-  const lv = levelInfo(S.xp), streak = streakInfo();
+  const streak = streakInfo();
   $('#statbar').innerHTML = `
-    <span class="stat ${streak.todayDone ? 'lit' : ''}" title="Daily streak">🔥 <b>${streak.current}</b></span>
-    <span class="stat stat-level" title="${esc(lv.title)}">
-      <span class="lv">Lv ${lv.level}</span>
-      <span class="mini-bar"><span style="width:${lv.into / lv.need * 100}%"></span></span>
-    </span>`;
+    <span class="stat ${streak.todayDone ? 'lit' : ''}" title="Daily streak">🔥 <b>${streak.current}</b> day${streak.current === 1 ? '' : 's'}</span>`;
 }
 
 window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });

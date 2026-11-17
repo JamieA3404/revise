@@ -35,6 +35,8 @@ const TodayView = {
         </div>
       </section>
 
+      ${this.hype(toFinals)}
+
       <section class="card status status-${tr.level}">
         <p>${status}</p>
         ${S.plan.extraMins > 0 ? `<p class="small">⚠️ At your current daily time, not every topic fits before ${fmtDate(coverBy(), { day: 'numeric', month: 'long' })}. Add about <b>${S.plan.extraMins} min a day</b> in Settings to cover 100%.</p>` : `<p class="small muted">Every topic is planned in by ${fmtDate(S.plan.coveredOn || coverBy(), { day: 'numeric', month: 'long' })}.</p>`}
@@ -64,6 +66,23 @@ const TodayView = {
       </section>`;
   },
 
+  // A daily hype strip linking to the Future page
+  hype(toFinals) {
+    const m = moneyStatus();
+    const lines = [
+      'Every session today is a brick in the future you actually want.',
+      'Top unis, a tech career, your own business. It starts with today\'s list.',
+      'Future you is either thanking you or wishing you\'d started. Choose.',
+      'Lock in now and the whole summer of 2027 is yours.',
+      'The people who get everything they want did the boring reps first.',
+    ];
+    const line = lines[daysBetween('2026-01-01', todayKey()) % lines.length];
+    return `<a class="hype-strip" href="#future">
+      <span class="hs-line">🚀 ${line}</span>
+      <span class="hs-money">💰 £${m.earned} / £${m.max} on course · ${toFinals > 0 ? toFinals + ' days to go' : 'exam season'}</span>
+    </a>`;
+  },
+
   row(s, i, isNext) {
     const sb = subj(s.subject), kd = KINDS[s.kind];
     const topic = s.topicId ? topicById(s.topicId) : null;
@@ -76,6 +95,7 @@ const TodayView = {
         <div class="s-main">
           <div class="s-sub">${sb.emoji} ${esc(sb.name)} · ${kd.emoji} ${kd.name}${s.strengthen ? ' (strengthen)' : ''} · ${kd.mins} min</div>
           <div class="s-title">${esc(title)}</div>
+          <div class="s-unlock">🔓 ${esc(unlockLine(s))}</div>
           <div class="s-steps">${s.done ? (s.result && s.result.score != null ? `Scored <b>${s.result.score}%</b>` : 'Done') : steps}</div>
         </div>
         <a class="btn ${s.done ? 'btn-white' : 'btn-green'} ${isNext ? '' : 'btn-sm'}" href="#session/${s.id}">${s.done ? 'Review' : inProgress ? 'Continue' : 'Start'}</a>

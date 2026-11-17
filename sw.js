@@ -6,7 +6,7 @@
    download the new files. Open the app twice to see the update.
    ========================================================================= */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE = 'revise-' + CACHE_VERSION;
 
 const FILES = [
@@ -22,6 +22,7 @@ const FILES = [
   'js/mastery.js',
   'js/planner.js',
   'js/ai.js',
+  'js/views/future.js',
   'js/views/today.js',
   'js/views/session.js',
   'js/views/roadmap.js',
