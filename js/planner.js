@@ -112,8 +112,15 @@ function buildPlan(resetBaseline = false) {
   };
 
   const cb = coverBy();
+  // The day revision starts (Settings → "Start revision on"). Before it: no sessions.
+  const startOn = revisionStart();
   let start = today;
-  if (old[today] && old[today].length) {   // today is fixed once planned
+  if (today < startOn) {
+    // Not started yet: keep anything you already finished today, plan nothing else
+    days[today] = (old[today] || []).filter(s => s.done);
+    days[today].forEach(s => apply(s, today));
+    start = addDays(today, 1);
+  } else if (old[today] && old[today].length) {   // today is fixed once planned
     days[today] = old[today];
     old[today].forEach(s => apply(s, today));
     start = addDays(today, 1);
@@ -125,7 +132,7 @@ function buildPlan(resetBaseline = false) {
 
   for (let k = start; k <= end; k = addDays(k, 1)) {
     const phase = phaseOf(k).id;
-    let mins = dayMinutes(k, phase);
+    let mins = k < startOn ? 0 : dayMinutes(k, phase);
     const list = (days[k] = []);
     const used = new Set();
     const push = s => { list.push(s); apply(s, k); mins -= KINDS[s.kind].mins; used.add(s.subject); };
@@ -200,6 +207,7 @@ function buildPlan(resetBaseline = false) {
 
   S.plan = {
     builtOn: today,
+    startOn,
     days,
     // The "on track" line is drawn once and kept, so falling behind shows up
     baseline: resetBaseline || !S.plan || !S.plan.baseline ? baseline : { ...baseline, ...S.plan.baseline },
@@ -211,8 +219,14 @@ function buildPlan(resetBaseline = false) {
 
 // Make sure there's an up-to-date roadmap (called on start-up)
 function ensurePlan() {
-  if (!S.plan || S.plan.builtOn !== todayKey()) buildPlan();
+  if (!S.plan || S.plan.builtOn !== todayKey() || S.plan.startOn !== revisionStart()) buildPlan(true);
   return S.plan;
+}
+
+// The first day of revision (never earlier than today for planning purposes)
+function revisionStart() {
+  const sd = S.settings.startDate, today = todayKey();
+  return sd && sd > today ? sd : today;
 }
 
 function todaySessions() { return (S.plan && S.plan.days[todayKey()]) || []; }

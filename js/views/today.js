@@ -54,7 +54,7 @@ const TodayView = {
         </div>
         <div class="bar"><div class="bar-fill" style="width:${mins ? minsDone / mins * 100 : 0}%"></div></div>
 
-        ${list.length ? `<ol class="sessions">${list.map((s, i) => this.row(s, i, s === next)).join('')}</ol>`
+        ${k < revisionStart() && !list.length ? this.notStarted() : list.length ? `<ol class="sessions">${list.map((s, i) => this.row(s, i, s === next)).join('')}</ol>`
           : `<div class="card empty"><div class="empty-emoji">😴</div><p><b>Rest day.</b> Recharging is part of the plan.</p></div>`}
 
         ${allDone ? `
@@ -84,6 +84,28 @@ const TodayView = {
     </a>`;
   },
 
+  // Shown before your start date: a preview of day one
+  notStarted() {
+    const startOn = revisionStart();
+    const first = S.plan.days[startOn] || [];
+    const when = daysBetween(todayKey(), startOn) === 1 ? 'tomorrow' : 'on ' + fmtDate(startOn, { weekday: 'long', day: 'numeric', month: 'long' });
+    return `
+      <div class="card starts-card">
+        <div class="empty-emoji">🚀</div>
+        <h2>Revision starts ${when}</h2>
+        <p>Rest up today. Here's day one:</p>
+        <ol class="preview-list">${first.map(s => {
+          const sb = subj(s.subject);
+          const t = s.topicId ? topicById(s.topicId).name : s.kind === 'paper' ? s.paper : KINDS[s.kind].name;
+          return `<li style="--sc:${sb.color}">${sb.emoji} <b>${esc(t)}</b> <span class="muted small">· ${KINDS[s.kind].name} · ${KINDS[s.kind].mins} min</span></li>`;
+        }).join('')}</ol>
+        <div class="row center wrap">
+          <button class="btn btn-purple" data-act="hype">🎬 Watch the hype cutscene</button>
+          <button class="btn btn-white" data-act="start-now">Actually, let's start today</button>
+        </div>
+      </div>`;
+  },
+
   row(s, i, isNext) {
     const sb = subj(s.subject), kd = KINDS[s.kind];
     const topic = s.topicId ? topicById(s.topicId) : null;
@@ -108,6 +130,11 @@ const TodayView = {
       const b = e.target.closest('[data-act]');
       if (!b) return;
       if (b.dataset.act === 'hype') return Cutscene.play();
+      if (b.dataset.act === 'start-now') {
+        S.settings.startDate = todayKey(); save();
+        buildPlan(true); render();
+        return toast('Let\'s go! Today\'s sessions are ready', '🔥');
+      }
       if (b.dataset.act === 'bonus') {
         const tomorrow = addDays(todayKey(), 1);
         const first = (S.plan.days[tomorrow] || []).shift();

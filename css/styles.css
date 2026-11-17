@@ -617,3 +617,6 @@ h2.mt { margin-top: 28px; }
 .co-pay b { font-size: 15px; white-space: nowrap; }
 .bpm-num { min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
 .link-btn { background: none; border: 0; padding: 6px 0; font: inherit; font-size: 13px; font-weight: 700; color: var(--blue); cursor: pointer; }
+.starts-card { text-align: center; border-color: var(--purple); }
+.preview-list { list-style: none; padding: 0; margin: 14px auto; max-width: 520px; display: grid; gap: 8px; text-align: left; }
+.preview-list li { padding: 10px 14px; border-radius: 14px; background: var(--soft); border-left: 6px solid var(--sc); }

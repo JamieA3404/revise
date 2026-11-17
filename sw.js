@@ -6,7 +6,7 @@
    download the new files. Open the app twice to see the update.
    ========================================================================= */
 
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const CACHE = 'revise-' + CACHE_VERSION;
 
 const FILES = [

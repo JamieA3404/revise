@@ -58,6 +58,7 @@ const SettingsView = {
         <h2>📅 Dates</h2>
         <p class="muted small">Check against your school's mock timetable and the official exam timetable.</p>
         <div class="field-row">
+          ${field('Start revision on', 'startDate', 'date', st.startDate)}
           ${field('Mocks start', 'mockStart', 'date', st.mockStart)}
           ${field('Mocks end', 'mockEnd', 'date', st.mockEnd)}
           ${field('First final exam', 'examStart', 'date', st.examStart)}
@@ -109,7 +110,7 @@ const SettingsView = {
       if (b) st[a][b] = val; else st[a] = val;
       save();
       // Anything that changes the plan rebuilds it
-      if (['mins', 'mockStart', 'mockEnd', 'examStart', 'neaUntil'].includes(a)) { buildPlan(true); toast('Saved. Roadmap rebuilt', '🗺️', 'blue'); }
+      if (['mins', 'startDate', 'mockStart', 'mockEnd', 'examStart', 'neaUntil'].includes(a)) { buildPlan(true); toast('Saved. Roadmap rebuilt', '🗺️', 'blue'); }
       else toast('Saved', '✓', 'blue');
     };
     root.onclick = async e => {

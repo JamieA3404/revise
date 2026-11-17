@@ -59,6 +59,7 @@ function defaultState() {
       // Minutes of revision per day (never less than 60)
       mins: { weekday: 60, weekend: 90, holiday: 120 },
       neaUntil: '2027-03-31',
+      startDate: '2026-11-18', // first day of revision (Settings → "Start revision on")
       // AI models (see ai.js). "model" makes lessons & tests, "markModel" marks your work.
       model: 'gpt-5.4-mini', markModel: 'gpt-5.4',
       // Your set texts — used for English Literature topics and AI lessons
