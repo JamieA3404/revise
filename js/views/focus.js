@@ -53,7 +53,8 @@ const Focus = {
   start() {
     this.running = true;
     this.endAt = Date.now() + this.remaining;
-    if (this.phase === 'work') Sound.play(S.settings.sound);
+    // Background noise plays during focus, unless your Spotify music is on
+    if (this.phase === 'work' && !(window.Music && Music.on)) Sound.play(S.settings.sound);
     else Sound.getCtx();
     this.requestWake();
     this.render();

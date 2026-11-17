@@ -46,6 +46,7 @@ setInterval(() => {
 
 // Start!
 Focus.bind();
+Music.init();
 ensurePlan();
 render();
 

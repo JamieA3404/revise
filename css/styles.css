@@ -497,3 +497,37 @@ h2.mt { margin-top: 28px; }
 .unlock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 .unlock-card { border-left: 8px solid var(--sc); }
 .unlock-card p { margin: 6px 0 0; }
+
+/* ---------- 🎵 Music button + Spotify panel ---------- */
+.music-btn {
+  position: fixed; z-index: 70; right: max(16px, env(safe-area-inset-right)); bottom: calc(96px + env(safe-area-inset-bottom));
+  width: 58px; height: 58px; border-radius: 50%; border: 0; cursor: pointer; font-size: 26px;
+  background: #1DB954; color: #fff; box-shadow: 0 5px 0 #138a3d, 0 8px 24px rgba(0,0,0,.2);
+  display: grid; place-items: center; transition: transform .08s;
+}
+.music-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #138a3d; }
+.music-btn:not(.playing) { filter: saturate(.6); }
+.music-btn .eq { position: absolute; bottom: 9px; display: flex; gap: 2px; align-items: flex-end; height: 10px; }
+.music-btn .eq i { width: 3px; background: #fff; border-radius: 2px; animation: eq .8s ease-in-out infinite alternate; }
+.music-btn .eq i:nth-child(2) { animation-delay: .25s; } .music-btn .eq i:nth-child(3) { animation-delay: .5s; }
+@keyframes eq { from { height: 2px; } to { height: 10px; } }
+.music-panel {
+  position: fixed; z-index: 70; right: max(16px, env(safe-area-inset-right)); bottom: calc(166px + env(safe-area-inset-bottom));
+  width: min(360px, calc(100vw - 32px)); background: var(--card); color: var(--ink);
+  border: 2px solid var(--line); border-bottom-width: 5px; border-radius: 22px; padding: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.25);
+  /* Hidden panels are moved off-screen (not removed) so music keeps playing */
+  transform: translateX(calc(100% + 40px)); opacity: 0; pointer-events: none; transition: transform .25s, opacity .25s;
+}
+.music-panel.show { transform: none; opacity: 1; pointer-events: auto; }
+#music-holder iframe { border-radius: 12px; display: block; }
+#music-holder.has-player { margin-bottom: 10px; }
+.music-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.music-form { display: grid; gap: 8px; }
+.music-form p { margin: 0; }
+.music-panel .tiny { margin: 8px 0 0; }
+@media (min-width: 1000px) {
+  .music-btn { bottom: 24px; right: 24px; }
+  .music-panel { bottom: 94px; right: 24px; }
+}
+@media (max-height: 700px) { #music-holder iframe { height: 152px; } }

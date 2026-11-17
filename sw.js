@@ -6,7 +6,7 @@
    download the new files. Open the app twice to see the update.
    ========================================================================= */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE = 'revise-' + CACHE_VERSION;
 
 const FILES = [
@@ -29,6 +29,7 @@ const FILES = [
   'js/views/mastery.js',
   'js/views/settings.js',
   'js/views/focus.js',
+  'js/music.js',
   'js/app.js',
   'icons/icon.svg',
   'icons/apple-touch-icon.png',

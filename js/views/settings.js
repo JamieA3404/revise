@@ -73,6 +73,7 @@ const SettingsView = {
           ${field('Break length (min)', 'breakMin', 'number', st.breakMin, 'min="1" max="60"')}
           ${field('Your first name', 'name', 'text', st.name, 'placeholder="optional"')}
         </div>
+        ${field('Spotify playlist link (for the 🎵 button)', 'spotify', 'url', st.spotify, 'placeholder="https://open.spotify.com/playlist/…"')}
         <label class="field check-field"><input name="sfx" type="checkbox" ${st.sfx ? 'checked' : ''}> <span>Sound effects</span></label>
         ${S.tracks.length ? `<p class="small"><b>Your audio:</b> ${S.tracks.map(t => `${esc(t.name)} <button class="icon-btn sm" data-act="del-track" data-id="${t.id}" aria-label="Delete">✕</button>`).join(' ')}</p>` : ''}
       </section>
@@ -107,6 +108,7 @@ const SettingsView = {
       const [a, b] = el.name.split('.');
       if (b) st[a][b] = val; else st[a] = val;
       save();
+      if (a === 'spotify') Music.render();
       // Anything that changes the plan rebuilds it
       if (['mins', 'mockStart', 'mockEnd', 'examStart', 'neaUntil'].includes(a)) { buildPlan(true); toast('Saved. Roadmap rebuilt', '🗺️', 'blue'); }
       else toast('Saved', '✓', 'blue');

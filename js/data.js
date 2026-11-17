@@ -53,6 +53,7 @@ function defaultState() {
       mockStart: '2026-12-01', mockEnd: '2026-12-12',
       examStart: '2027-05-10', examEnd: '2027-06-23',
       sound: 'brown', volume: 0.5, sfx: true,
+      spotify: '',   // your Spotify playlist link (see music.js)
       // Minutes of revision per day (never less than 60)
       mins: { weekday: 60, weekend: 90, holiday: 120 },
       neaUntil: '2027-03-31',
