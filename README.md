@@ -1,34 +1,23 @@
 # Revise 📚✅
 
-A GCSE revision app that runs offline as an installable web app (PWA). It's plain HTML, CSS and JavaScript with no build step.
+A GCSE revision app that works offline and can be installed like an app (a PWA). It builds a day-by-day roadmap to your mocks and finals, with an AI tutor for lessons, flashcards, tests and marking. It's plain HTML, CSS and JavaScript, with no build step and no server.
 
-## Files
-
-| File | What it does |
-|---|---|
-| `index.html` | The page skeleton and navigation |
-| `css/styles.css` | All the styling. Colours are at the top in `:root` |
-| `js/data.js` | Subjects, task types, saving/loading, date helpers |
-| `js/audio.js` | Brown/white/rain noise, reward sound effects, your own audio files |
-| `js/fx.js` | Confetti, toasts, celebration pop-ups |
-| `js/rewards.js` | XP, levels, gems, streaks, badges |
-| `js/views/*.js` | One file per page: today, focus, plan, journey, progress, settings |
-| `js/app.js` | Starts the app and switches pages |
-| `sw.js` | Service worker, which makes the app work offline |
-| `manifest.webmanifest` | App name and icon for installing |
+## How it works
+- **Roadmap** ([js/planner.js](js/planner.js)): rebuilt every day from your real scores. Every topic gets planned in, weak topics come back sooner, and missed sessions merge into the next few days. At least 60 minutes a day.
+- **Sessions** ([js/views/session.js](js/views/session.js)): each one is step by step. A learn session goes Learn → Brain dump → Flashcards → Test → Results. A past paper goes Get the paper → Upload photos or a PDF → AI marking.
+- **Mastery** ([js/mastery.js](js/mastery.js)): your strength in every topic, plus an estimated grade and chance of a 9 for each subject.
+- **Curriculum** ([js/curriculum.js](js/curriculum.js)): every topic for every subject. The Maths topic frequencies are Revise's own estimates.
+- **AI** ([js/ai.js](js/ai.js)): calls OpenAI with *your* key. The key is stored only in your browser, never in this code.
 
 ## Run it locally
-
 ```bash
 cd ~/Documents/revision-site
 python3 -m http.server 8000
 ```
-Then open http://localhost:8000 in Safari. Press Ctrl+C in Terminal to stop the server.
+Then open http://localhost:8000. To start using the AI, go to Settings → paste your OpenAI key → Save.
 
 ## After you edit anything
+In `sw.js`, bump `CACHE_VERSION`, then open the app twice so it picks up the new files.
 
-Open `sw.js` and bump `CACHE_VERSION` (for example `'v1'` → `'v2'`). Otherwise installed copies keep the old files. After you publish, open the app twice and the update appears.
-
-## Your data
-
-Your data is saved in the browser on each device, so the Mac and the iPad have separate copies. Use **Settings → Export / Import** to move it between them. Your own audio files aren't included in the backup.
+## Never commit your API key
+The key lives in the browser's storage on each device, not in any file. Keep it that way, because this repo is public on GitHub Pages.

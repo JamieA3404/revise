@@ -12,16 +12,16 @@ const Focus = {
   endAt: 0,           // timestamp when the current phase finishes (when running)
   remaining: 0,       // ms left (when paused)
   total: 0,           // ms length of this phase
-  taskId: null,       // the task you're focusing on (today), or null for free study
+  label: '',         // what you're working on
   subject: 'maths',   // used for free study
   timer: null,
   wakeLock: null,
 
-  /* Open focus mode. minutes = optional custom length for the first round (e.g. "just 5"). */
-  open(taskId = null, minutes = null) {
-    this.taskId = taskId;
-    const t = taskId && findTask(todayKey(), taskId);
-    if (t) this.subject = t.subject;
+  /* Open focus mode. info = { subject, label } (what you're working on).
+     minutes = optional length for the first round (e.g. 90 for a past paper). */
+  open(info = {}, minutes = null) {
+    this.subject = info.subject || this.subject;
+    this.label = info.label || '';
     this.phase = 'work';
     this.running = false;
     this.total = this.remaining = (minutes || S.settings.workMin) * 60000;
@@ -30,7 +30,6 @@ const Focus = {
     this.render();
     clearInterval(this.timer);
     this.timer = setInterval(() => this.tick(), 250);
-    if (minutes) this.start(); // "Just 5 mins" starts straight away — no excuses!
   },
 
   close() {
@@ -45,7 +44,7 @@ const Focus = {
     if (document.fullscreenElement) document.exitFullscreen?.();
     $('#focus').hidden = true;
     document.body.classList.remove('no-scroll');
-    render();
+    renderStatbar();
   },
 
   left() { return this.running ? Math.max(0, this.endAt - Date.now()) : this.remaining; },
@@ -100,15 +99,14 @@ const Focus = {
   // Log the minutes and give rewards. full = true if the whole session was completed
   finishWork(minutes, full) {
     if (minutes < 1) return;
-    logFocus(minutes, this.subject, this.taskId);
-    grant(minutes * 2, full ? 5 : 0, full ? { x: innerWidth / 2, y: innerHeight / 2 - 160 } : null);
+    logFocus(minutes, this.subject);
+    grant(minutes, full ? { x: innerWidth / 2, y: innerHeight / 2 - 160 } : null);
     if (full) {
       Confetti.burst(innerWidth / 2, innerHeight / 2 - 100, 100);
-      toast(`${minutes} minutes done! +${minutes * 2} XP`, '🍅');
+      toast(`${minutes} minutes done! +${minutes} XP`, '🍅');
     } else {
-      toast(`${minutes} min logged. +${minutes * 2} XP`, '⏱');
+      toast(`${minutes} min logged. +${minutes} XP`, '⏱');
     }
-    checkBadges();
   },
 
   // Gentle system notification if the app is in the background (only if allowed)
@@ -141,8 +139,6 @@ const Focus = {
 
   render() {
     const k = todayKey();
-    const tasks = liveTasks(ensureDay(k));
-    const task = this.taskId && findTask(k, this.taskId);
     const s = subj(this.subject);
     const st = S.settings;
     const c = 2 * Math.PI * 140;
@@ -166,13 +162,7 @@ const Focus = {
       <div class="focus-body">
         <div class="focus-task">
           <div class="focus-task-emoji" style="background:${s.color}">${s.emoji}</div>
-          <select data-act="pick" aria-label="What are you working on?">
-            ${tasks.filter(t => !t.done || t.id === this.taskId).map(t =>
-              `<option value="task:${t.id}" ${t.id === this.taskId ? 'selected' : ''}>${subj(t.subject).emoji} ${esc(subj(t.subject).name)} — ${esc(taskLabel(t))}</option>`).join('')}
-            <optgroup label="Free study">
-              ${SUBJECTS.map(x => `<option value="subj:${x.id}" ${!this.taskId && x.id === this.subject ? 'selected' : ''}>${x.emoji} ${esc(x.name)} (free study)</option>`).join('')}
-            </optgroup>
-          </select>
+          <div class="focus-label"><div class="small">${esc(s.name)}</div><b>${esc(this.label || 'Focus session')}</b></div>
         </div>
 
         <div class="phase-pill">${isWork ? '🎯 FOCUS' : '☕ BREAK — stretch, drink water, no phone'}</div>
@@ -199,7 +189,6 @@ const Focus = {
         <div class="row center wrap">
           <button class="btn btn-ghost btn-sm" data-act="plus5">＋5 min</button>
           <button class="btn btn-ghost btn-sm" data-act="skip">${isWork ? 'Skip to break ⏭' : 'Skip break ⏭'}</button>
-          ${task && !task.done ? '<button class="btn btn-ghost btn-sm" data-act="done-task">✓ Task done</button>' : ''}
         </div>
       </div>
 
@@ -251,9 +240,6 @@ const Focus = {
             this.running = false; this.render();
           }
           break;
-        case 'done-task':
-          setTaskDone(todayKey(), this.taskId, true, b);
-          this.render(); break;
         case 'sound':
           S.settings.sound = b.dataset.sound; save();
           if (this.running && this.phase === 'work') Sound.play(S.settings.sound);
@@ -263,12 +249,7 @@ const Focus = {
     };
     el.onchange = async e => {
       const a = e.target.dataset.act;
-      if (a === 'pick') {
-        const [kind, id] = e.target.value.split(':');
-        if (kind === 'task') { this.taskId = id; this.subject = findTask(todayKey(), id).subject; }
-        else { this.taskId = null; this.subject = id; }
-        this.render();
-      } else if (a === 'upload' && e.target.files[0]) {
+      if (a === 'upload' && e.target.files[0]) {
         try {
           const id = await Tracks.add(e.target.files[0]);
           S.settings.sound = 'track:' + id; save();

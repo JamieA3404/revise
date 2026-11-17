@@ -6,7 +6,7 @@
    download the new files. Open the app twice to see the update.
    ========================================================================= */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE = 'revise-' + CACHE_VERSION;
 
 const FILES = [
@@ -14,17 +14,20 @@ const FILES = [
   'index.html',
   'manifest.webmanifest',
   'css/styles.css',
+  'js/curriculum.js',
   'js/data.js',
   'js/audio.js',
   'js/fx.js',
   'js/rewards.js',
+  'js/mastery.js',
   'js/planner.js',
+  'js/ai.js',
   'js/views/today.js',
-  'js/views/focus.js',
-  'js/views/plan.js',
-  'js/views/journey.js',
-  'js/views/progress.js',
+  'js/views/session.js',
+  'js/views/roadmap.js',
+  'js/views/mastery.js',
   'js/views/settings.js',
+  'js/views/focus.js',
   'js/app.js',
   'icons/icon.svg',
   'icons/apple-touch-icon.png',

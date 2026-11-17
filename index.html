@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Revise</title>
-  <meta name="description" content="GCSE revision: daily checklist, focus timer, roadmap and rewards.">
+  <meta name="description" content="GCSE revision roadmap with AI lessons, tests and marking.">
 
   <!-- Install as an app -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -25,10 +25,8 @@
     <nav class="nav" id="nav" aria-label="Main">
       <div class="brand"><img src="icons/icon.svg" alt=""> Revise</div>
       <a href="#today" data-route="today"><span class="nav-ico">🏠</span><span>Today</span></a>
-      <a href="#journey" data-route="journey"><span class="nav-ico">🗺️</span><span>Journey</span></a>
-      <a href="#" class="nav-focus" data-act="open-focus"><span class="nav-ico">⏱️</span><span>Focus</span></a>
-      <a href="#plan" data-route="plan"><span class="nav-ico">📅</span><span>Plan</span></a>
-      <a href="#progress" data-route="progress"><span class="nav-ico">🏆</span><span>Progress</span></a>
+      <a href="#roadmap" data-route="roadmap"><span class="nav-ico">🗺️</span><span>Roadmap</span></a>
+      <a href="#mastery" data-route="mastery"><span class="nav-ico">📊</span><span>Mastery</span></a>
       <a href="#settings" data-route="settings"><span class="nav-ico">⚙️</span><span>Settings</span></a>
     </nav>
 
@@ -46,17 +44,20 @@
   <canvas id="confetti" aria-hidden="true"></canvas>
 
   <!-- Scripts load in this order: data first, app last -->
+  <script src="js/curriculum.js"></script>
   <script src="js/data.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/fx.js"></script>
   <script src="js/rewards.js"></script>
+  <script src="js/mastery.js"></script>
   <script src="js/planner.js"></script>
+  <script src="js/ai.js"></script>
   <script src="js/views/today.js"></script>
-  <script src="js/views/focus.js"></script>
-  <script src="js/views/plan.js"></script>
-  <script src="js/views/journey.js"></script>
-  <script src="js/views/progress.js"></script>
+  <script src="js/views/session.js"></script>
+  <script src="js/views/roadmap.js"></script>
+  <script src="js/views/mastery.js"></script>
   <script src="js/views/settings.js"></script>
+  <script src="js/views/focus.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

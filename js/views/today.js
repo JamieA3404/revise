@@ -1,228 +1,100 @@
 /* =========================================================================
-   today.js — the Today page: countdowns, daily goal, checklist.
-   Each view has html() which returns the page HTML, and bind(root)
-   which wires up the buttons (using data-act="..." attributes).
+   today.js — today's sessions, whether you're on track, countdowns.
    ========================================================================= */
 
 const TodayView = {
-  adding: false,   // is the "add a task" form open?
-
   html() {
-    const k = todayKey();
-    const day = ensureDay(k);
-    const tasks = liveTasks(day);
-    const done = tasks.filter(t => t.done).length;
-    const left = tasks.length - done;
-    const mins = focusMinutesOn(k);
-    const pct = tasks.length ? done / tasks.length : 0;
-    const st = S.settings;
+    ensurePlan();
+    const k = todayKey(), st = S.settings;
+    const list = todaySessions();
+    const done = list.filter(s => s.done);
+    const mins = list.reduce((a, s) => a + KINDS[s.kind].mins, 0);
+    const minsDone = done.reduce((a, s) => a + KINDS[s.kind].mins, 0);
+    const tr = trackStatus();
+    const toMocks = daysBetween(k, st.mockStart), toFinals = daysBetween(k, st.examStart);
     const hour = new Date().getHours();
-    const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-    const next = tasks.find(t => !t.done);
-    const streak = streakInfo();
+    const greet = (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + (st.name ? ', ' + esc(st.name) : '');
+    const next = list.find(s => !s.done);
+    const allDone = list.length && !next;
 
-    // Leftovers from yesterday that haven't been dealt with
-    const yk = addDays(k, -1), yday = S.days[yk];
-    const leftovers = yday && !yday.leftoversHandled ? liveTasks(yday).filter(t => !t.done) : [];
+    const status = {
+      on: `✅ <b>On track.</b> ${tr.learned} of ${tr.total} topics learned so far.`,
+      close: `🟠 <b>Slightly behind (${tr.behind} topic${tr.behind > 1 ? 's' : ''}).</b> I've merged ${tr.behind > 1 ? 'them' : 'it'} into your next few days.`,
+      behind: `🔴 <b>${tr.behind} topics behind.</b> They're spread over the coming days. One bonus session a day for a week will catch you up.`,
+    }[tr.level];
 
     return `
-      <section class="hero card">
-        <div class="hero-text">
-          <h1>${greet}${st.name ? ', ' + esc(st.name) : ''} 👋</h1>
-          <p class="muted">${esc(dailyMotivation())}</p>
-          ${!streak.todayDone && streak.current > 0
-            ? `<p class="streak-warn">🔥 Your ${streak.current}-day streak is waiting. One task keeps it alive!</p>` : ''}
-          <div class="hero-actions">
-            <button class="btn btn-green btn-big" data-act="start-next">
-              ▶ ${next ? 'Start: ' + esc(subj(next.subject).name) : 'Start a focus session'}
-            </button>
-            <button class="btn btn-white" data-act="just5" title="Can't get going? Just do 5 minutes.">⏱ Just 5 mins</button>
-          </div>
+      <section class="today-head">
+        <div>
+          <h1>${fmtDate(k, { weekday: 'long', day: 'numeric', month: 'long' })}</h1>
+          <p class="muted">${greet} 👋</p>
         </div>
-        ${ring(pct, done, tasks.length)}
+        <div class="count-pills">
+          ${toMocks > 0 ? `<span class="pill pill-orange">📝 Mocks in <b>${toMocks}</b> days</span>` : ''}
+          ${toFinals > 0 ? `<span class="pill pill-purple">🎯 Finals in <b>${toFinals}</b> days</span>` : ''}
+        </div>
       </section>
 
-      ${countdowns()}
+      <section class="card status status-${tr.level}">
+        <p>${status}</p>
+        ${S.plan.extraMins > 0 ? `<p class="small">⚠️ At your current daily time, not every topic fits before ${fmtDate(coverBy(), { day: 'numeric', month: 'long' })}. Add about <b>${S.plan.extraMins} min a day</b> in Settings to cover 100%.</p>` : `<p class="small muted">Every topic is planned in by ${fmtDate(S.plan.coveredOn || coverBy(), { day: 'numeric', month: 'long' })}.</p>`}
+      </section>
 
-      ${leftovers.length ? `
-        <section class="banner card">
-          <div><b>${leftovers.length} task${leftovers.length > 1 ? 's' : ''} left over from yesterday.</b>
-          <span class="muted">Bring ${leftovers.length > 1 ? 'them' : 'it'} into today?</span></div>
-          <div class="row">
-            <button class="btn btn-blue btn-sm" data-act="bring-leftovers">↪ Bring over</button>
-            <button class="btn btn-white btn-sm" data-act="skip-leftovers">Skip</button>
-          </div>
-        </section>` : ''}
+      ${AI.key() ? '' : `<section class="card banner">
+        <p>🔑 <b>Add your OpenAI key</b> to unlock written lessons, flashcards, tests, marking and feedback. Until then, sessions run in do-it-yourself mode.</p>
+        <a class="btn btn-blue btn-sm" href="#settings">Add key</a></section>`}
 
       <section>
         <div class="section-head">
-          <h2>Today's mission</h2>
-          <span class="muted">${fmtDate(k, { weekday: 'long', day: 'numeric', month: 'long' })} · ${fmtMins(mins)} focused</span>
+          <h2>Today · ${fmtMins(mins)}</h2>
+          <span class="muted">${done.length}/${list.length} done · ${fmtMins(minsDone)}</span>
         </div>
+        <div class="bar"><div class="bar-fill" style="width:${mins ? minsDone / mins * 100 : 0}%"></div></div>
 
-        ${tasks.length ? `<ul class="tasks">${tasks.map(t => this.taskRow(t)).join('')}</ul>` : `
-          ${S.autoPlan && S.autoPlan.days[k] && !S.autoPlan.days[k].length ? `
-          <div class="empty card">
-            <div class="empty-emoji">😴</div>
-            <p><b>Rest day.</b> Nothing planned today. Recharging is part of the plan.<br>Feeling keen? Add a task below for bonus XP.</p>
-          </div>` : `
-          <div class="empty card">
-            <div class="empty-emoji">🗓️</div>
-            <p><b>No tasks yet today.</b><br>Add a one-off task below, or set up your weekly plan so tasks appear automatically every day.</p>
-            <a class="btn btn-blue" href="#plan">Set up my plan</a>
-          </div>`}`}
+        ${list.length ? `<ol class="sessions">${list.map((s, i) => this.row(s, i, s === next)).join('')}</ol>`
+          : `<div class="card empty"><div class="empty-emoji">😴</div><p><b>Rest day.</b> Recharging is part of the plan.</p></div>`}
 
-        ${this.adding ? `
-          <form class="add-form card" data-form="add">
-            <select name="subject" aria-label="Subject">${subjectOptions(this.lastSubject || 'maths')}</select>
-            <select name="type" aria-label="Task type">${typeOptions(this.lastType || 'flashcards')}</select>
-            <input name="title" placeholder="What exactly? e.g. Cell biology (optional)" autocomplete="off">
-            <div class="row">
-              <button class="btn btn-green" type="submit">Add task</button>
-              <button class="btn btn-white" type="button" data-act="cancel-add">Cancel</button>
-            </div>
-          </form>` : `
-          <div class="row wrap">
-            <button class="btn btn-white" data-act="open-add">＋ Add a task for today</button>
-            ${left > 0 ? `<button class="btn btn-white" data-act="carry">↪ Push ${left} unfinished to tomorrow</button>` : ''}
-          </div>`}
+        ${allDone ? `
+          <div class="card day-done">
+            <div class="empty-emoji">🏆</div>
+            <h2>Day complete!</h2>
+            <p>Everything planned for today is done. Want to get ahead?</p>
+            <button class="btn btn-white" data-act="bonus">⚡ Pull in tomorrow's first session</button>
+          </div>` : ''}
       </section>`;
   },
 
-  taskRow(t) {
-    const s = subj(t.subject), ty = ttype(t.type);
+  row(s, i, isNext) {
+    const sb = subj(s.subject), kd = KINDS[s.kind];
+    const topic = s.topicId ? topicById(s.topicId) : null;
+    const title = topic ? topic.name : s.kind === 'paper' ? s.paper : s.kind === 'mockreview' ? `Go through your ${sb.name} mock` : 'Push your NEA forward';
+    const steps = STEPS[s.kind].map(x => x[1]).filter(x => x !== 'Results' && x !== 'Done').join(' → ');
+    const inProgress = !s.done && s.step > 0;
     return `
-      <li class="task ${t.done ? 'done' : ''}" style="--sc:${s.color}">
-        <button class="check" data-act="toggle" data-id="${t.id}" aria-label="${t.done ? 'Untick' : 'Tick off'} ${esc(s.name)}">
-          <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-        </button>
-        <div class="task-icon">${s.emoji}</div>
-        <div class="task-main">
-          <div class="task-title">${esc(s.name)}</div>
-          <div class="task-meta">
-            <span class="chip">${ty.emoji} ${esc(taskLabel(t))}</span>
-            ${t.title ? `<span class="chip chip-soft">${ty.name}</span>` : ''}
-            ${t.source === 'carry' ? '<span class="chip chip-soft">↪ carried</span>' : ''}
-            ${t.source === 'topic' ? '<span class="chip chip-soft">🎯 weak topic</span>' : ''}
-            <span class="xp-chip">${t.done ? '✓ ' : '+'}${ty.xp} XP</span>
-          </div>
+      <li class="session ${s.done ? 'done' : ''} ${isNext ? 'is-next' : ''}" style="--sc:${sb.color}">
+        <div class="s-num">${s.done ? '✓' : i + 1}</div>
+        <div class="s-main">
+          <div class="s-sub">${sb.emoji} ${esc(sb.name)} · ${kd.emoji} ${kd.name}${s.strengthen ? ' (strengthen)' : ''} · ${kd.mins} min</div>
+          <div class="s-title">${esc(title)}</div>
+          <div class="s-steps">${s.done ? (s.result && s.result.score != null ? `Scored <b>${s.result.score}%</b>` : 'Done') : steps}</div>
         </div>
-        ${t.done ? '' : `<button class="icon-btn play" data-act="focus" data-id="${t.id}" aria-label="Focus on this task">▶</button>`}
-        <button class="icon-btn" data-act="delete" data-id="${t.id}" aria-label="Remove task">✕</button>
+        <a class="btn ${s.done ? 'btn-white' : 'btn-green'} ${isNext ? '' : 'btn-sm'}" href="#session/${s.id}">${s.done ? 'Review' : inProgress ? 'Continue' : 'Start'}</a>
       </li>`;
   },
 
   bind(root) {
-    const k = todayKey();
     root.onclick = e => {
       const b = e.target.closest('[data-act]');
       if (!b) return;
-      const id = b.dataset.id, day = ensureDay(k);
-      switch (b.dataset.act) {
-        case 'toggle': {
-          const t = findTask(k, id);
-          setTaskDone(k, id, !t.done, b);
-          render();
-          // Replay the "pop" on the freshly drawn tick
-          if (t.done) $(`.check[data-id="${id}"]`)?.classList.add('pop');
-          break;
-        }
-        case 'focus': Focus.open(id); break;
-        case 'start-next': {
-          const next = liveTasks(day).find(t => !t.done);
-          Focus.open(next ? next.id : null);
-          break;
-        }
-        case 'just5': {
-          const next = liveTasks(day).find(t => !t.done);
-          Focus.open(next ? next.id : null, 5);
-          break;
-        }
-        case 'delete': {
-          const t = findTask(k, id);
-          if (t.done && !confirm('Remove a task you already finished? Its XP will be taken back.')) return;
-          if (t.done) grant(-t.xp, -5);
-          day.tasks = day.tasks.filter(x => x.id !== id);
-          save(); render();
-          break;
-        }
-        case 'open-add': this.adding = true; render(); $('[name="title"]')?.focus(); break;
-        case 'cancel-add': this.adding = false; render(); break;
-        case 'carry': {
-          const tomorrow = addDays(k, 1);
-          const n = moveUnfinished(k, tomorrow);
-          render();
-          toast(`Moved ${n} task${n > 1 ? 's' : ''} to tomorrow. Rest up 💪`, '↪', 'blue');
-          break;
-        }
-        case 'bring-leftovers': {
-          const yk = addDays(k, -1);
-          const n = moveUnfinished(yk, k);
-          S.days[yk].leftoversHandled = true; save();
-          render();
-          toast(`${n} task${n > 1 ? 's' : ''} added to today`, '↪', 'blue');
-          break;
-        }
-        case 'skip-leftovers': S.days[addDays(k, -1)].leftoversHandled = true; save(); render(); break;
+      if (b.dataset.act === 'bonus') {
+        const tomorrow = addDays(todayKey(), 1);
+        const first = (S.plan.days[tomorrow] || []).shift();
+        if (!first) return toast('Nothing planned tomorrow. Enjoy the rest!', '😴', 'blue');
+        todaySessions().push(first);
+        buildPlan();
+        render();
+        toast('Bonus session added. Future you says thanks', '⚡');
       }
-    };
-    root.onsubmit = e => {
-      e.preventDefault();
-      const f = new FormData(e.target);
-      this.lastSubject = f.get('subject'); this.lastType = f.get('type');
-      ensureDay(k).tasks.push(makeTask({ subject: f.get('subject'), type: f.get('type'), title: f.get('title').trim() }));
-      save();
-      this.adding = false;
-      render();
-      toast('Task added — you\'ve got this', '📌', 'blue');
     };
   },
 };
-
-/* Move unfinished tasks from one day to another (marks the old ones as moved) */
-function moveUnfinished(fromKey, toKey) {
-  const from = S.days[fromKey], to = ensureDay(toKey);
-  const undone = liveTasks(from).filter(t => !t.done);
-  for (const t of undone) {
-    t.moved = true;
-    to.tasks.push(makeTask({ subject: t.subject, type: t.type, title: t.title, source: 'carry' }));
-  }
-  save();
-  return undone.length;
-}
-
-/* Circular progress ring for today's tasks */
-function ring(pct, done, total) {
-  const r = 52, c = 2 * Math.PI * r;
-  const label = total === 0 ? '—' : done === total ? '🏆' : `${done}/${total}`;
-  return `
-    <div class="ring ${total && done === total ? 'ring-done' : ''}">
-      <svg viewBox="0 0 120 120">
-        <circle class="ring-bg" cx="60" cy="60" r="${r}"/>
-        <circle class="ring-fg" cx="60" cy="60" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - pct)}"/>
-      </svg>
-      <div class="ring-label"><b>${label}</b><span>${total && done === total ? 'cleared!' : 'tasks'}</span></div>
-    </div>`;
-}
-
-/* The two countdown cards (mocks + finals) */
-function countdowns() {
-  const st = S.settings, k = todayKey();
-  const card = (colour, emoji, title, start, end, after) => {
-    const toStart = daysBetween(k, start), toEnd = daysBetween(k, end);
-    let big, small;
-    if (toStart > 0) { big = toStart; small = `day${toStart === 1 ? '' : 's'} until ${title}`; }
-    else if (toEnd >= 0) { big = '🔥'; small = `${title} — happening now. You've got this!`; }
-    else { big = '✓'; small = after; }
-    return `
-      <div class="count card card-${colour}">
-        <div class="count-emoji">${emoji}</div>
-        <div><div class="count-big">${big}</div><div class="count-small">${small}</div>
-        ${toStart > 0 ? `<div class="count-date">${fmtDate(start, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</div>` : ''}</div>
-      </div>`;
-  };
-  return `<section class="counts">
-    ${card('orange', '📝', 'mocks', st.mockStart, st.mockEnd, 'Mocks done! Add your weak topics.')}
-    ${card('purple', '🎯', 'final exams', st.examStart, st.examEnd, 'EXAMS OVER. Enjoy summer 🎉')}
-  </section>`;
-}

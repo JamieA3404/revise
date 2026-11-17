@@ -1,7 +1,7 @@
 {
   "name": "Revise",
   "short_name": "Revise",
-  "description": "GCSE revision: daily checklist, focus timer, roadmap and rewards.",
+  "description": "GCSE revision roadmap with AI lessons, tests and marking.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
