@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Revise</title>
+  <meta name="description" content="GCSE revision: daily checklist, focus timer, roadmap and rewards.">
+
+  <!-- Install as an app -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Revise">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#F4F7FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111A23" media="(prefers-color-scheme: dark)">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Navigation: a sidebar on wide screens, a bottom tab bar on narrower ones -->
+    <nav class="nav" id="nav" aria-label="Main">
+      <div class="brand"><img src="icons/icon.svg" alt=""> Revise</div>
+      <a href="#today" data-route="today"><span class="nav-ico">🏠</span><span>Today</span></a>
+      <a href="#journey" data-route="journey"><span class="nav-ico">🗺️</span><span>Journey</span></a>
+      <a href="#" class="nav-focus" data-act="open-focus"><span class="nav-ico">⏱️</span><span>Focus</span></a>
+      <a href="#plan" data-route="plan"><span class="nav-ico">📅</span><span>Plan</span></a>
+      <a href="#progress" data-route="progress"><span class="nav-ico">🏆</span><span>Progress</span></a>
+      <a href="#settings" data-route="settings"><span class="nav-ico">⚙️</span><span>Settings</span></a>
+    </nav>
+
+    <main>
+      <header class="statbar" id="statbar"></header>
+      <div id="view" class="view"></div>
+    </main>
+  </div>
+
+  <!-- Full-screen focus timer (hidden until opened) -->
+  <div id="focus" class="focus" hidden></div>
+  <!-- Celebration pop-ups, toasts and confetti -->
+  <div id="modal" class="modal-wrap" hidden></div>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+
+  <!-- Scripts load in this order: data first, app last -->
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/rewards.js"></script>
+  <script src="js/views/today.js"></script>
+  <script src="js/views/focus.js"></script>
+  <script src="js/views/plan.js"></script>
+  <script src="js/views/journey.js"></script>
+  <script src="js/views/progress.js"></script>
+  <script src="js/views/settings.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
